@@ -123,6 +123,124 @@
             animation: pulse-alarm 1s infinite;
         }
 
+        /* === ALERT NOTIFICATIONS === */
+        @keyframes toast-slide-in {
+            0% { transform: translateX(120%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toast-slide-out {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(120%); opacity: 0; }
+        }
+        @keyframes banner-drop {
+            0% { transform: translateY(-100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes banner-rise {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100%); opacity: 0; }
+        }
+        @keyframes border-pulse {
+            0%, 100% { border-color: rgba(239, 68, 68, 0.4); }
+            50% { border-color: rgba(239, 68, 68, 0.9); }
+        }
+        #alert-toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+            max-width: 380px;
+            width: calc(100% - 2rem);
+        }
+        .alert-toast {
+            pointer-events: auto;
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            animation: toast-slide-in 0.3s ease-out forwards;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        .alert-toast.dismissing {
+            animation: toast-slide-out 0.3s ease-in forwards;
+        }
+        .alert-toast.local {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+        }
+        .alert-toast.remote {
+            background: rgba(30, 5, 5, 0.95);
+            border: 2px solid rgba(239, 68, 68, 0.6);
+            color: #fca5a5;
+            animation: toast-slide-in 0.3s ease-out forwards, border-pulse 1s ease-in-out 3;
+        }
+        .alert-toast .toast-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        .alert-toast .toast-title {
+            font-family: 'Black Ops One', cursive;
+            font-size: 0.85rem;
+            color: #fff;
+            letter-spacing: 0.1em;
+        }
+        .alert-toast .toast-detail {
+            opacity: 0.7;
+            font-size: 0.65rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Incident Ledger row hover + intel tooltip */
+        .ledger-row {
+            cursor: default;
+            transition: background-color 0.15s, border-left-color 0.15s, box-shadow 0.15s;
+        }
+        .ledger-row:hover {
+            background-color: rgba(15, 23, 42, 0.9) !important;
+            box-shadow: inset 3px 0 0 var(--ledger-row-accent, #38bdf8);
+        }
+        #ledger-tooltip {
+            position: fixed;
+            z-index: 9998;
+            max-width: 320px;
+            padding: 0.5rem 0.75rem;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.15s, transform 0.15s;
+        }
+        #ledger-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        #ledger-tooltip .tooltip-title {
+            font-family: 'Black Ops One', cursive;
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            color: #38bdf8;
+            margin-bottom: 0.35rem;
+        }
+        #ledger-tooltip .tooltip-note {
+            color: #94a3b8;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
         @keyframes marquee {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
@@ -144,6 +262,14 @@
 <body id="main-body" class="min-h-screen flex flex-col lg:flex-row relative">
 
     <div class="scan-line"></div>
+
+    <!-- Alert Toast Container -->
+    <div id="alert-toast-container"></div>
+    <!-- Ledger row hover intel tooltip -->
+    <div id="ledger-tooltip">
+        <div class="tooltip-title">/// FULL INTEL ///</div>
+        <div class="tooltip-note"></div>
+    </div>
 
     <!-- Sidebar / Command Center -->
     <div class="lg:w-96 w-full glass-panel flex-shrink-0 p-6 flex flex-col gap-6 z-10 lg:h-screen lg:sticky lg:top-0 overflow-y-auto border-r border-sky-900/50">
@@ -315,9 +441,24 @@
                         <input type="text" id="user-display-name" placeholder="Display name (optional)" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
                         <input type="email" id="user-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
                         <input type="password" id="user-password" placeholder="Temp password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] text-slate-400 uppercase tracking-widest">Role</label>
+                            <select id="user-role" class="bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono flex-1">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
                         <button onclick="createUser()" class="btn-tech w-full py-2 text-xs">Create User</button>
                     </div>
-                    <div id="admin-user-stats" class="text-[10px] text-slate-400 uppercase tracking-widest mb-2"></div>
+                    <div class="border-t border-sky-900/30 pt-3 mt-3">
+                        <h5 class="text-[10px] text-sky-500 uppercase tracking-widest mb-2">Reset password (admin)</h5>
+                        <div class="space-y-2">
+                            <input type="email" id="reset-password-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                            <input type="password" id="reset-password-new" placeholder="New password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                            <button onclick="adminResetPassword()" class="btn-tech w-full py-2 text-xs">Reset Password</button>
+                        </div>
+                    </div>
+                    <div id="admin-user-stats" class="text-[10px] text-slate-400 uppercase tracking-widest mb-2 mt-3"></div>
                     <div id="users-list" class="text-xs text-sky-100 space-y-2"></div>
                 </div>
                 <div class="bg-black/30 border border-sky-900/50 p-3 lg:col-span-2">
@@ -453,6 +594,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
     <script>
         // --- AUDIO ENGINE ---
@@ -600,6 +742,7 @@
             dateRange: 'today',
             lastInteractionTime: Date.now(),
             user: null,
+            userRole: 'user', // 'admin' | 'user'
             soundPrefs: { ...DEFAULT_SOUND_PREFS },
             settings: { ...DEFAULT_SETTINGS }
         };
@@ -613,11 +756,13 @@
         let settingsUnsubscribe = null;
         let lastAuthStatus = false;
         let presenceInterval = null;
+        let initialInteractionsLoaded = false;
         const ACTIVE_WINDOW_MINUTES = 5;
 
         firebase.initializeApp(FIREBASE_CONFIG);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const functions = firebase.functions();
         const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
         const toTimestamp = firebase.firestore.Timestamp.fromMillis;
 
@@ -637,12 +782,15 @@
 
             auth.onAuthStateChanged(async (user) => {
                 state.user = user || null;
+                if (!user) state.userRole = 'user';
                 updateAuthUI();
 
                 if (user) {
                     await ensureUserProfile(user);
                     startListeners();
                     await loadUserProfile(user);
+                    // Re-evaluate admin status after profile (and role) are loaded
+                    updateAuthUI();
                 } else {
                     stopListeners();
                     state.interactions = [];
@@ -673,6 +821,8 @@
             }
         }
 
+        const funnyNoteFunc = functions.httpsCallable('funnyNote');
+
         async function logInteraction() {
             if (!state.user) {
                 showAuthError("Sign in to report an incident.");
@@ -683,6 +833,7 @@
                 return;
             }
             const noteInput = document.getElementById('interaction-note');
+            const reportBtn = document.getElementById('report-btn');
             let note = noteInput.value.trim();
             
             // Random Intel Generation if blank
@@ -690,7 +841,21 @@
                 const randomIndex = Math.floor(Math.random() * RANDOM_INTEL.length);
                 note = RANDOM_INTEL[randomIndex];
             }
-            
+
+            // Disable button while processing
+            reportBtn.disabled = true;
+            reportBtn.querySelector('.relative').innerText = 'PROCESSING...';
+
+            // Try AI rewrite — fall back to original note on any failure
+            try {
+                const result = await funnyNoteFunc({ note: note, category: selectedCategory });
+                if (result.data && result.data.funnyNote) {
+                    note = result.data.funnyNote;
+                }
+            } catch (err) {
+                console.warn('funnyNote unavailable, using original note:', err.message);
+            }
+
             const selectedLocation = state.locations.find(loc => loc.id === state.selectedLocationId);
             const newLog = {
                 category: selectedCategory,
@@ -703,16 +868,16 @@
                 clientTimestamp: Date.now()
             };
 
+            pendingLocalReport = true;
             await db.collection('interactions').add(newLog);
             state.lastInteractionTime = Date.now();
             updateTimer();
             showLocationError('');
             
             noteInput.value = '';
-            
-            // FX
-            triggerRedAlert();
-            playSound('siren');
+            reportBtn.disabled = false;
+            reportBtn.querySelector('.relative').innerText = 'REPORT SIGHTING';
+            // FX triggered via Firestore snapshot — reporter vs. remote handled there
         }
 
         async function resetData() {
@@ -727,17 +892,93 @@
 
         // --- VISUAL LOGIC ---
 
-        function triggerRedAlert() {
-            const body = document.getElementById('main-body');
-            const radarText = document.getElementById('radar-status');
-            body.classList.add('red-alert-mode');
-            radarText.innerText = "TARGET ACQUIRED";
-            radarText.classList.add('text-red-500', 'animate-pulse');
+        const REMOTE_ALERT_TITLES = [
+            "INCOMING CONTACT",
+            "BRACE FOR QUESTIONS",
+            "CONTACT DETECTED",
+            "PERIMETER BREACH",
+            "QUESTIONS INBOUND",
+            "EVASION FAILED"
+        ];
+
+        const REMOTE_ALERT_SUBTITLES = [
+            "maintain composure",
+            "estimated duration: longer than you think",
+            "\"quick question\" protocol engaged",
+            "resistance is futile",
+            "too late to look busy",
+            "this could have been an email"
+        ];
+
+        let pendingLocalReport = false;
+
+        function showAlertToast(type, data) {
+            const container = document.getElementById('alert-toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'alert-toast ' + type;
+
+            const catIcon = { signature: 'fa-pen-nib', question: 'fa-question', audit: 'fa-radiation', social: 'fa-coffee' };
+            const catColor = { signature: '#38bdf8', question: '#facc15', audit: '#ef4444', social: '#34d399' };
+            const icon = catIcon[data.category] || 'fa-triangle-exclamation';
+            const color = catColor[data.category] || '#fff';
+
+            if (type === 'local') {
+                toast.innerHTML = `
+                    <div class="toast-header">
+                        <i class="fa-solid fa-check" style="color: #38bdf8;"></i>
+                        <span class="toast-title">Incident Logged</span>
+                    </div>
+                    <div style="color: ${color};"><i class="fa-solid ${icon}"></i> ${CONFIG.labels[data.category] || data.category}</div>
+                    <div class="toast-detail">${data.note || ''}</div>
+                `;
+            } else {
+                const title = REMOTE_ALERT_TITLES[Math.floor(Math.random() * REMOTE_ALERT_TITLES.length)];
+                const subtitle = REMOTE_ALERT_SUBTITLES[Math.floor(Math.random() * REMOTE_ALERT_SUBTITLES.length)];
+                const reporter = data.userEmail || 'Unknown';
+                const location = data.locationName || '';
+                toast.innerHTML = `
+                    <div class="toast-header">
+                        <i class="fa-solid fa-triangle-exclamation animate-pulse" style="color: #ef4444;"></i>
+                        <span class="toast-title">${title}</span>
+                    </div>
+                    <div style="color: ${color};"><i class="fa-solid ${icon}"></i> ${CONFIG.labels[data.category] || data.category}${location ? ' — ' + location : ''}</div>
+                    <div style="color: #e2e8f0; margin-top: 2px;">${data.note || ''}</div>
+                    <div class="toast-detail">reported by ${reporter} · ${subtitle}</div>
+                `;
+            }
+
+            container.appendChild(toast);
+
+            const duration = type === 'local' ? 2500 : 5000;
             setTimeout(() => {
-                body.classList.remove('red-alert-mode');
-                radarText.innerText = "SCANNING";
-                radarText.classList.remove('text-red-500', 'animate-pulse');
-            }, 3000);
+                toast.classList.add('dismissing');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function triggerRedAlert(incidentData, isLocal) {
+            const radarText = document.getElementById('radar-status');
+
+            if (isLocal) {
+                // Reporter: quick, subtle confirmation toast
+                showAlertToast('local', incidentData);
+                playSound('blip');
+            } else {
+                // Everyone else: attention-grabbing alert banner + radar + siren
+                const body = document.getElementById('main-body');
+                body.classList.add('red-alert-mode');
+                setTimeout(() => body.classList.remove('red-alert-mode'), 4000);
+
+                radarText.innerText = "TARGET ACQUIRED";
+                radarText.classList.add('text-red-500', 'animate-pulse');
+                setTimeout(() => {
+                    radarText.innerText = "SCANNING";
+                    radarText.classList.remove('text-red-500', 'animate-pulse');
+                }, 5000);
+
+                showAlertToast('remote', incidentData);
+                playSound('siren');
+            }
         }
 
         function getLocationRadarPosition(locationId) {
@@ -871,23 +1112,48 @@
             } else {
                 document.getElementById('empty-log').classList.add('hidden');
                 
+                const tooltipEl = document.getElementById('ledger-tooltip');
+                const tooltipNote = tooltipEl ? tooltipEl.querySelector('.tooltip-note') : null;
+
                 filteredInteractions.slice(0, 20).forEach(log => {
                     const date = new Date(log.timestamp);
                     const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     
                     const row = document.createElement('tr');
-                    row.className = "hover:bg-sky-900/10 transition-colors";
-                    
-                    let catColor = CONFIG.colors[log.category] || '#fff';
+                    const catColor = CONFIG.colors[log.category] || '#38bdf8';
+                    row.className = "ledger-row hover:bg-sky-900/10";
+                    row.style.setProperty('--ledger-row-accent', catColor);
                     
                     const reporter = log.userEmail || log.displayName || 'Unknown';
+                    const noteEscaped = (log.note || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     row.innerHTML = `
                         <td class="px-3 py-2 text-slate-400 border-b border-sky-900/10">${timeStr}</td>
                         <td class="px-3 py-2 border-b border-sky-900/10" style="color: ${catColor}">${CONFIG.labels[log.category]}</td>
-                        <td class="px-3 py-2 text-slate-300 border-b border-sky-900/10 truncate max-w-[150px]">${log.note}</td>
+                        <td class="px-3 py-2 text-slate-300 border-b border-sky-900/10 truncate max-w-[150px]">${noteEscaped}</td>
                         <td class="px-3 py-2 text-slate-400 border-b border-sky-900/10">${log.locationName || '-'}</td>
                         <td class="px-3 py-2 text-slate-400 border-b border-sky-900/10 truncate max-w-[120px]" title="${reporter}">${reporter}</td>
                     `;
+
+                    if (tooltipNote) {
+                        row.addEventListener('mouseenter', () => {
+                            tooltipNote.textContent = log.note || '—';
+                            tooltipEl.classList.add('visible');
+                            requestAnimationFrame(() => {
+                                const rect = row.getBoundingClientRect();
+                                const ttRect = tooltipEl.getBoundingClientRect();
+                                let left = rect.left;
+                                let top = rect.top - ttRect.height - 8;
+                                if (top < 8) top = rect.bottom + 8;
+                                if (left + ttRect.width > window.innerWidth - 8) left = window.innerWidth - ttRect.width - 8;
+                                if (left < 8) left = 8;
+                                tooltipEl.style.left = left + 'px';
+                                tooltipEl.style.top = top + 'px';
+                            });
+                        });
+                        row.addEventListener('mouseleave', () => {
+                            tooltipEl.classList.remove('visible');
+                        });
+                    }
                     tbody.appendChild(row);
                 });
             }
@@ -1305,28 +1571,33 @@
         }
 
         function isAdmin() {
-            if (!state.user || !state.user.email) return false;
-            const email = state.user.email.toLowerCase();
-            return CONFIG.adminEmails.map(val => val.toLowerCase()).includes(email);
+            return state.userRole === 'admin';
         }
 
         async function ensureUserProfile(user) {
             if (!user) return;
             const profileRef = db.collection('userProfiles').doc(user.uid);
             const profileSnap = await profileRef.get();
+            const email = (user.email || '').toLowerCase();
+            const legacyAdmin = CONFIG.adminEmails.map(val => val.toLowerCase()).includes(email);
             if (!profileSnap.exists) {
                 await profileRef.set({
                     email: user.email || '',
                     displayName: user.displayName || '',
+                    role: legacyAdmin ? 'admin' : 'user',
                     createdAt: serverTimestamp(),
                     lastLogin: serverTimestamp(),
                     lastActiveAt: serverTimestamp()
                 }, { merge: true });
             } else {
-                await profileRef.set({
+                const updates = {
                     lastLogin: serverTimestamp(),
                     lastActiveAt: serverTimestamp()
-                }, { merge: true });
+                };
+                if (legacyAdmin) {
+                    updates.role = 'admin';
+                }
+                await profileRef.set(updates, { merge: true });
             }
         }
 
@@ -1334,12 +1605,16 @@
             if (!user) return;
             const profileRef = db.collection('userProfiles').doc(user.uid);
             const profileSnap = await profileRef.get();
+            const email = (user.email || '').toLowerCase();
+            const legacyAdmin = CONFIG.adminEmails.map(val => val.toLowerCase()).includes(email);
             if (profileSnap.exists) {
-                const data = profileSnap.data();
+                const data = profileSnap.data() || {};
                 if (data && data.selectedLocationId) {
                     state.selectedLocationId = data.selectedLocationId;
                 }
             }
+            const storedRole = profileSnap.exists ? (profileSnap.data() || {}).role : undefined;
+            state.userRole = (storedRole === 'admin' || legacyAdmin) ? 'admin' : 'user';
             renderLocations();
         }
 
@@ -1370,6 +1645,28 @@
                     state.lastInteractionTime = filtered[0]?.timestamp || Date.now();
                     renderDashboard();
                     updateChart();
+
+                    // Alert all connected clients when a new incident arrives
+                    if (initialInteractionsLoaded) {
+                        const newDocs = snapshot.docChanges().filter(change => change.type === 'added');
+                        if (newDocs.length > 0) {
+                            // Grab the most recent new incident's data for display
+                            const newestChange = newDocs[0];
+                            const incidentData = newestChange.doc.data() || {};
+
+                            if (pendingLocalReport) {
+                                // This client reported it — show subtle confirmation
+                                pendingLocalReport = false;
+                                triggerRedAlert(incidentData, true);
+                            } else {
+                                // Another user reported it — show the real alert
+                                triggerRedAlert(incidentData, false);
+                            }
+                        }
+                    } else {
+                        // First snapshot is the initial data load — don't alert
+                        initialInteractionsLoaded = true;
+                    }
                 });
 
             locationsUnsubscribe = db.collection('locations')
@@ -1418,6 +1715,7 @@
             locationsUnsubscribe = null;
             profilesUnsubscribe = null;
             settingsUnsubscribe = null;
+            initialInteractionsLoaded = false;
             stopPresence();
         }
 
@@ -1482,12 +1780,17 @@
                 const entry = document.createElement('div');
                 entry.className = "bg-black/40 px-2 py-1 border border-sky-900/30";
                 const displayName = profile.displayName ? ` (${profile.displayName})` : '';
+                const roleLabel = profile.role === 'admin' ? 'Admin' : 'User';
+                const roleClass = profile.role === 'admin' ? 'text-amber-400' : 'text-slate-400';
                 const statusLabel = isActive ? 'online' : 'offline';
                 const statusClass = isActive ? 'text-emerald-400' : 'text-slate-500';
                 entry.innerHTML = `
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
                         <span>${profile.email || 'Unknown'}${displayName}</span>
-                        <span class="text-[10px] uppercase ${statusClass}">${statusLabel}</span>
+                        <span class="flex items-center gap-2">
+                            <span class="text-[10px] uppercase ${roleClass}">${roleLabel}</span>
+                            <span class="text-[10px] uppercase ${statusClass}">${statusLabel}</span>
+                        </span>
                     </div>
                 `;
                 list.appendChild(entry);
@@ -1595,6 +1898,8 @@
             const displayName = document.getElementById('user-display-name').value.trim();
             const email = document.getElementById('user-email').value.trim();
             const password = document.getElementById('user-password').value;
+            const roleEl = document.getElementById('user-role');
+            const role = (roleEl && roleEl.value === 'admin') ? 'admin' : 'user';
 
             if (!email || !password) {
                 showAuthError('User email and password required.');
@@ -1612,6 +1917,7 @@
                 await db.collection('userProfiles').doc(uid).set({
                     email,
                     displayName,
+                    role,
                     createdAt: serverTimestamp()
                 }, { merge: true });
                 await secondaryAuth.signOut();
@@ -1619,8 +1925,34 @@
                 document.getElementById('user-display-name').value = '';
                 document.getElementById('user-email').value = '';
                 document.getElementById('user-password').value = '';
+                showAuthMessage('User created.');
             } catch (err) {
                 showAuthError(err.message || 'User creation failed.');
+            }
+        }
+
+        async function adminResetPassword() {
+            if (!isAdmin()) return;
+            const email = document.getElementById('reset-password-email').value.trim();
+            const newPassword = document.getElementById('reset-password-new').value;
+            if (!email || !newPassword) {
+                showAuthError('Email and new password required.');
+                return;
+            }
+            if (newPassword.length < 6) {
+                showAuthError('Password must be at least 6 characters.');
+                return;
+            }
+            showAuthError('');
+            try {
+                const resetPasswordFn = functions.httpsCallable('adminResetPassword');
+                await resetPasswordFn({ targetUserEmail: email, newPassword });
+                document.getElementById('reset-password-email').value = '';
+                document.getElementById('reset-password-new').value = '';
+                showAuthMessage('Password reset successfully.');
+            } catch (err) {
+                const msg = (err && err.message) || (err && err.details && err.details.message) || 'Password reset failed.';
+                showAuthError(String(msg));
             }
         }
 
