@@ -122,6 +122,23 @@
         .red-alert-mode {
             animation: pulse-alarm 1s infinite;
         }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .banner-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 25s linear infinite;
+        }
+        .banner-marquee span {
+            flex-shrink: 0;
+            padding-right: 3rem;
+        }
+        @media (max-width: 768px) {
+            .banner-marquee { animation-duration: 35s; }
+        }
     </style>
 </head>
 <body id="main-body" class="min-h-screen flex flex-col lg:flex-row relative">
@@ -266,10 +283,11 @@
     <!-- Main Dashboard -->
     <div class="flex-1 p-4 lg:p-8 overflow-y-auto">
         
-        <!-- Marquee Warning -->
-        <div class="mb-6 overflow-hidden border-y border-red-900/30 bg-red-900/10 py-1">
-            <div class="whitespace-nowrap animate-[marquee_20s_linear_infinite] text-xs font-bold text-red-400 uppercase tracking-[0.5em]">
-                *** MONITORING ACTIVE *** KEEP HEAD DOWN *** DO NOT MAKE EYE CONTACT IF AUDIT IS IN PROGRESS *** HIDE THE SNACKS ***
+        <!-- Marquee Banner -->
+        <div class="mb-6 overflow-hidden border-y border-sky-900/30 bg-sky-900/10 py-1">
+            <div class="banner-marquee whitespace-nowrap text-xs font-bold text-sky-400 uppercase tracking-[0.5em]">
+                <span>*** TEAM DASHBOARD *** TRACKING TOGETHER *** EVERY VISIT COUNTS *** GREAT WORK OUT THERE ***</span>
+                <span>*** TEAM DASHBOARD *** TRACKING TOGETHER *** EVERY VISIT COUNTS *** GREAT WORK OUT THERE ***</span>
             </div>
         </div>
 
@@ -332,10 +350,16 @@
 
         <!-- Top Stats Row -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <!-- Total Count -->
+            <!-- Incidents: Personal / Total -->
             <div class="glass-panel p-4 flex flex-col justify-between">
                 <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Incidents</p>
-                <h3 id="stat-total" class="text-3xl font-black text-white neon-text mt-2">0</h3>
+                <div class="mt-2 flex items-baseline gap-2 flex-wrap">
+                    <span id="stat-personal" class="text-2xl font-black text-sky-300">0</span>
+                    <span class="text-slate-500 text-sm">personal</span>
+                    <span class="text-slate-600">/</span>
+                    <span id="stat-total" class="text-3xl font-black text-white neon-text">0</span>
+                    <span class="text-slate-500 text-sm">total</span>
+                </div>
             </div>
 
             <!-- Focus Level -->
@@ -433,7 +457,7 @@
     <script>
         // --- AUDIO ENGINE ---
         const SOUND_FILES = {
-            siren: 'sounds/siren.wav',
+            siren: 'sounds/siren.mp3',
             blip: 'sounds/blip.mp3',
             click: 'sounds/click.wav',
             login: 'sounds/blip.mp3',
@@ -808,11 +832,12 @@
             const filteredInteractions = getFilteredInteractions();
             // Stats
             const total = filteredInteractions.length;
-            const signatures = filteredInteractions.filter(i => i.category === 'signature').length;
+            const personal = state.user ? filteredInteractions.filter(i => i.userId === state.user.uid).length : 0;
             const focusLevel = calculateFocusLevel(filteredInteractions);
             const gdpImpact = calculateGdpImpact(filteredInteractions);
             const morale = calculateMorale(filteredInteractions);
 
+            document.getElementById('stat-personal').innerText = personal;
             document.getElementById('stat-total').innerText = total;
             document.getElementById('stat-signatures').innerText = focusLevel + "%";
             document.getElementById('bar-wrist').style.width = focusLevel + "%";
@@ -1059,6 +1084,11 @@
             return minutes;
         }
 
+        function getDateRangeMinutes() {
+            const { start, end } = getDateRangeBounds();
+            return (end - start) / (1000 * 60);
+        }
+
         function calculateAverageIntervalMinutes(logs) {
             if (!logs || logs.length < 2) {
                 return getTargetIntervalMinutes();
@@ -1078,18 +1108,35 @@
         }
 
         function calculateFocusLevel(logs) {
+            if (!state.user) return 100;
+            const personalLogs = logs.filter(log => log.userId === state.user.uid);
+            const personalVisits = personalLogs.length;
+            const rangeMinutes = getDateRangeMinutes();
             const target = getTargetIntervalMinutes();
-            const avgInterval = calculateAverageIntervalMinutes(logs);
-            const ratio = avgInterval / target;
-            return Math.max(0, Math.min(100, Math.round(Math.min(1, ratio) * 100)));
+            const expectedVisits = rangeMinutes / target;
+            if (expectedVisits <= 0) return 100;
+            const ratio = Math.min(1, personalVisits / expectedVisits);
+            return Math.max(0, Math.min(100, Math.round(100 * (1 - ratio))));
         }
 
         function calculateMorale(logs) {
+            if (!logs || logs.length === 0) return 100;
+            const rangeMinutes = getDateRangeMinutes();
             const target = getTargetIntervalMinutes();
-            const avgInterval = calculateAverageIntervalMinutes(logs);
-            const ratio = avgInterval / target;
-            const penalty = Math.max(0, 1 - ratio);
-            return Math.max(0, Math.min(100, Math.round(100 - penalty * 60)));
+            const expectedVisits = rangeMinutes / target;
+            if (expectedVisits <= 0) return 100;
+            const byUser = {};
+            logs.forEach(log => {
+                const uid = log.userId || '_';
+                if (!byUser[uid]) byUser[uid] = 0;
+                byUser[uid] += 1;
+            });
+            const focusLevels = Object.values(byUser).map(visits => {
+                const ratio = Math.min(1, visits / expectedVisits);
+                return 100 * (1 - ratio);
+            });
+            const avg = focusLevels.reduce((a, b) => a + b, 0) / focusLevels.length;
+            return Math.max(0, Math.min(100, Math.round(avg)));
         }
 
         function calculateGdpImpact(logs) {
