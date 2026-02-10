@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T.I.F.F.A.N.Y. Defense System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap');
+        
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: #0b0f19;
+            color: #94a3b8;
+            overflow-x: hidden;
+        }
+
+        .header-font {
+            font-family: 'Black Ops One', cursive;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.05), inset 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        /* Corner accents for "Tech" look */
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 10px; height: 10px;
+            border-top: 2px solid #38bdf8;
+            border-left: 2px solid #38bdf8;
+        }
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 10px; height: 10px;
+            border-bottom: 2px solid #38bdf8;
+            border-right: 2px solid #38bdf8;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px #38bdf8, 0 0 10px #38bdf8;
+        }
+        
+        .danger-text {
+            color: #ef4444;
+            text-shadow: 0 0 5px #ef4444, 0 0 10px #ef4444;
+        }
+
+        .btn-tech {
+            background: linear-gradient(180deg, rgba(56,189,248,0.1) 0%, rgba(56,189,248,0.05) 100%);
+            border: 1px solid #38bdf8;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-tech:hover {
+            background: rgba(56,189,248,0.2);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+        .btn-tech:active {
+            transform: translateY(0);
+        }
+
+        /* Danger Button */
+        .btn-danger-tech {
+            background: linear-gradient(180deg, rgba(239,68,68,0.1) 0%, rgba(239,68,68,0.05) 100%);
+            border: 1px solid #ef4444;
+        }
+        .btn-danger-tech:hover {
+            background: rgba(239,68,68,0.2);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Scanning Line Animation */
+        .scan-line {
+            width: 100%;
+            height: 2px;
+            background: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 4px rgba(56, 189, 248, 0.8);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 50;
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.5; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border: 1px solid #38bdf8; }
+
+        .category-btn.selected,
+        .btn-tech.selected {
+            background-color: rgba(56, 189, 248, 0.2);
+            box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.2);
+            border-color: #38bdf8;
+        }
+
+        @keyframes pulse-alarm {
+            0% { background-color: rgba(239, 68, 68, 0); }
+            50% { background-color: rgba(239, 68, 68, 0.1); }
+            100% { background-color: rgba(239, 68, 68, 0); }
+        }
+        .red-alert-mode {
+            animation: pulse-alarm 1s infinite;
+        }
+    </style>
+</head>
+<body id="main-body" class="min-h-screen flex flex-col lg:flex-row relative">
+
+    <div class="scan-line"></div>
+
+    <!-- Sidebar / Command Center -->
+    <div class="lg:w-96 w-full glass-panel flex-shrink-0 p-6 flex flex-col gap-6 z-10 lg:h-screen lg:sticky lg:top-0 overflow-y-auto border-r border-sky-900/50">
+        
+        <!-- Header -->
+        <div class="border-b border-sky-500/20 pb-6 text-center">
+            <h1 class="text-xs font-bold text-sky-600 tracking-[0.3em] uppercase mb-2">Early Warning System</h1>
+            <h2 class="text-4xl header-font text-white neon-text tracking-wider">T.I.F.F.A.N.Y.</h2>
+            <div class="text-[0.6rem] text-sky-400 mt-1 uppercase tracking-widest">Tactical Intelligence For Finance & Administration Necessary Yelling</div>
+        </div>
+
+        <!-- Auth -->
+        <div id="auth-panel" class="bg-black/40 p-4 border border-sky-900/50">
+            <div class="flex justify-between items-center">
+                <span class="text-xs uppercase tracking-widest text-slate-500">Operator Login</span>
+                <span id="auth-status" class="text-[10px] text-slate-600 uppercase">Offline</span>
+            </div>
+            <div id="auth-error" class="text-[10px] text-red-400 mt-2 hidden"></div>
+            <div id="auth-message" class="text-[10px] text-emerald-400 mt-2 hidden"></div>
+            <div id="auth-logged-out" class="mt-3 space-y-2">
+                <input type="email" id="login-email" placeholder="Email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 placeholder-sky-800 font-mono">
+                <input type="password" id="login-password" placeholder="Password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 placeholder-sky-800 font-mono">
+                <button onclick="login()" class="w-full btn-tech py-2 text-white text-xs font-bold tracking-widest">Sign In</button>
+                <button onclick="resetPassword()" class="w-full text-[10px] text-sky-500 uppercase tracking-widest hover:text-sky-300">Forgot password? Send reset link</button>
+            </div>
+            <div id="auth-logged-in" class="mt-3 hidden">
+                <div class="text-[10px] text-sky-500 uppercase tracking-widest">Signed in as</div>
+                <div id="auth-user-email" class="text-xs text-sky-200 mt-1"></div>
+                <button onclick="logout()" class="w-full btn-tech py-2 text-white text-xs font-bold tracking-widest mt-3">Sign Out</button>
+            </div>
+        </div>
+
+        <!-- DEFCON Status -->
+        <div class="bg-black/40 p-4 border border-sky-900/50">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-xs uppercase tracking-widest text-slate-500">Vibe Level</span>
+                <span id="threat-text" class="text-xl font-bold text-emerald-500 animate-pulse">CHILL</span>
+            </div>
+            <div class="h-2 w-full bg-slate-800 flex gap-1">
+                <div id="defcon-1" class="h-full flex-1 bg-emerald-900 transition-colors duration-300"></div>
+                <div id="defcon-2" class="h-full flex-1 bg-yellow-900 transition-colors duration-300"></div>
+                <div id="defcon-3" class="h-full flex-1 bg-orange-900 transition-colors duration-300"></div>
+                <div id="defcon-4" class="h-full flex-1 bg-red-900 transition-colors duration-300"></div>
+            </div>
+        </div>
+
+        <!-- Timer -->
+        <div class="bg-black/40 p-4 border border-sky-900/50 text-center">
+            <p class="text-[10px] text-sky-600 uppercase tracking-widest mb-1">Peace & Quiet Duration</p>
+            <div id="timer-display" class="text-3xl text-white font-bold tracking-widest font-mono">00:00:00</div>
+        </div>
+
+        <!-- Sound Controls -->
+        <div id="sound-panel" class="bg-black/40 p-4 border border-sky-900/50">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs uppercase tracking-widest text-slate-500">Audio Channels</span>
+                <span class="text-[10px] text-slate-600 uppercase">Toggle</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[10px] text-sky-200 uppercase tracking-widest">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="sound-toggle-siren" class="accent-sky-400">
+                    Siren
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="sound-toggle-blip" class="accent-sky-400">
+                    Radar Blip
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="sound-toggle-click" class="accent-sky-400">
+                    Click
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="sound-toggle-login" class="accent-sky-400">
+                    Login
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="sound-toggle-logout" class="accent-sky-400">
+                    Logout
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="sound-toggle-error" class="accent-sky-400">
+                    Error
+                </label>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="flex flex-col gap-3">
+            <h3 class="text-xs uppercase tracking-widest text-sky-400 border-b border-sky-900/50 pb-2">Log Incident</h3>
+            
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="selectCategory('signature')" class="category-btn btn-tech p-3 text-left group">
+                    <i class="fa-solid fa-pen-nib text-sky-400 mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <div class="text-[10px] font-bold text-white">Signature Hunt</div>
+                </button>
+                <button onclick="selectCategory('question')" class="category-btn btn-tech p-3 text-left group">
+                    <i class="fa-solid fa-question text-yellow-400 mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <div class="text-[10px] font-bold text-white">"Quick" Q</div>
+                </button>
+                <button onclick="selectCategory('audit')" class="category-btn btn-danger-tech p-3 text-left group border-red-500/30">
+                    <i class="fa-solid fa-radiation text-red-500 mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <div class="text-[10px] font-bold text-red-400">The Audit</div>
+                </button>
+                <button onclick="selectCategory('social')" class="category-btn btn-tech p-3 text-left group">
+                    <i class="fa-solid fa-coffee text-emerald-400 mb-1 block group-hover:scale-110 transition-transform"></i>
+                    <div class="text-[10px] font-bold text-white">Weekend Plans</div>
+                </button>
+            </div>
+
+            <!-- Location -->
+            <div class="flex flex-col gap-2">
+                <label for="location-select" class="text-[10px] text-sky-600 uppercase tracking-widest">Location</label>
+                <select id="location-select" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                    <option value="">Select location...</option>
+                </select>
+                <div id="location-error" class="text-[10px] text-red-400 hidden"></div>
+            </div>
+
+            <!-- Notes -->
+            <input type="text" id="interaction-note" placeholder="Subject (e.g. 'Receipts??')" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-3 focus:outline-none focus:border-sky-500 placeholder-sky-800 font-mono uppercase">
+
+            <!-- Submit -->
+            <button id="report-btn" onclick="logInteraction()" class="w-full btn-danger-tech py-4 text-white font-bold tracking-widest flex items-center justify-center gap-3 group relative overflow-hidden">
+                <span class="absolute inset-0 w-full h-full bg-red-600/20 translate-y-full group-hover:translate-y-0 transition-transform duration-200"></span>
+                <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
+                <span class="relative z-10">REPORT SIGHTING</span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-auto pt-4 border-t border-sky-900/30 flex justify-between items-center text-[10px]">
+            <div class="text-sky-700">SYS.VER.2.4.1</div>
+            <button id="admin-reset" onclick="resetData()" class="text-red-900 hover:text-red-500 uppercase tracking-wider hidden">Nuke Data</button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="flex-1 p-4 lg:p-8 overflow-y-auto">
+        
+        <!-- Marquee Warning -->
+        <div class="mb-6 overflow-hidden border-y border-red-900/30 bg-red-900/10 py-1">
+            <div class="whitespace-nowrap animate-[marquee_20s_linear_infinite] text-xs font-bold text-red-400 uppercase tracking-[0.5em]">
+                *** MONITORING ACTIVE *** KEEP HEAD DOWN *** DO NOT MAKE EYE CONTACT IF AUDIT IS IN PROGRESS *** HIDE THE SNACKS ***
+            </div>
+        </div>
+
+        <!-- Admin Console -->
+        <div id="admin-panel" class="glass-panel p-4 mb-6 hidden">
+            <div class="flex items-center justify-between border-b border-sky-900/50 pb-3 mb-4">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-xs font-bold text-sky-600 uppercase tracking-widest">Admin Console</h3>
+                    <span class="text-[10px] text-slate-500 uppercase">Restricted</span>
+                </div>
+                <button id="admin-toggle" onclick="toggleAdminPanel()" class="btn-tech px-3 py-1 text-[10px]">Collapse</button>
+            </div>
+            <div id="admin-content" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-black/30 border border-sky-900/50 p-3">
+                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Locations</h4>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="location-name" placeholder="New location name" class="flex-1 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <button onclick="addLocation()" class="btn-tech px-3 text-xs">Add</button>
+                    </div>
+                    <div id="locations-list" class="text-xs text-sky-100 space-y-2"></div>
+                </div>
+                <div class="bg-black/30 border border-sky-900/50 p-3">
+                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Users</h4>
+                    <div class="space-y-2 mb-3">
+                        <input type="text" id="user-display-name" placeholder="Display name (optional)" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <input type="email" id="user-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <input type="password" id="user-password" placeholder="Temp password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <button onclick="createUser()" class="btn-tech w-full py-2 text-xs">Create User</button>
+                    </div>
+                    <div id="admin-user-stats" class="text-[10px] text-slate-400 uppercase tracking-widest mb-2"></div>
+                    <div id="users-list" class="text-xs text-sky-100 space-y-2"></div>
+                </div>
+                <div class="bg-black/30 border border-sky-900/50 p-3 lg:col-span-2">
+                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Store Settings</h4>
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                        <label for="target-interval" class="text-[10px] text-slate-400 uppercase tracking-widest">Target Visit Interval (minutes)</label>
+                        <input type="number" id="target-interval" min="5" max="240" step="5" class="w-28 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <button onclick="saveSettings()" class="btn-tech px-3 text-xs">Save</button>
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-2">Used to calculate Focus, Morale, and GDP Impact.</div>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between text-[10px] text-slate-500">
+                <span>Optional migration from local-only browser data.</span>
+                <button onclick="importLocalData()" class="btn-tech px-3 py-1 text-[10px]">Import Local Data</button>
+            </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            <span class="text-[10px] text-sky-600 uppercase tracking-widest">Time Window</span>
+            <div class="flex flex-wrap gap-2">
+                <button id="range-today" onclick="setDateRange('today')" class="btn-tech px-3 py-1 text-[10px] selected">Today</button>
+                <button id="range-past_week" onclick="setDateRange('past_week')" class="btn-tech px-3 py-1 text-[10px]">Past Week</button>
+                <button id="range-past_month" onclick="setDateRange('past_month')" class="btn-tech px-3 py-1 text-[10px]">Past Month</button>
+                <button id="range-past_90" onclick="setDateRange('past_90')" class="btn-tech px-3 py-1 text-[10px]">Past 90 Days</button>
+                <button id="range-previous_month" onclick="setDateRange('previous_month')" class="btn-tech px-3 py-1 text-[10px]">Previous Month</button>
+            </div>
+        </div>
+
+        <!-- Top Stats Row -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Total Count -->
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Incidents</p>
+                <h3 id="stat-total" class="text-3xl font-black text-white neon-text mt-2">0</h3>
+            </div>
+
+            <!-- Focus Level -->
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Focus Level</p>
+                <h3 id="stat-signatures" class="text-3xl font-black text-white mt-2">0%</h3>
+                <div class="w-full bg-sky-900/30 h-1 mt-2"><div id="bar-wrist" class="bg-sky-400 h-full" style="width: 0%"></div></div>
+            </div>
+
+            <!-- GDP Impact -->
+            <div class="glass-panel p-4 flex flex-col justify-between">
+                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">GDP Impact</p>
+                <h3 id="stat-cost" class="text-3xl font-black text-red-400 danger-text mt-2">$0</h3>
+                <p class="text-[9px] text-slate-500 mt-1">@ $50/hr overhead</p>
+            </div>
+
+             <!-- Sanity -->
+             <div class="glass-panel p-4 flex flex-col justify-between">
+                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Office Morale</p>
+                <h3 id="stat-morale" class="text-3xl font-black text-emerald-400 mt-2">100%</h3>
+                <p id="stat-morale-sub" class="text-[9px] text-slate-500 mt-1">Optimal Conditions</p>
+            </div>
+        </div>
+
+        <!-- Radar & Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            
+            <!-- The Radar (Fake Visual) -->
+            <div class="glass-panel p-4 col-span-1 flex flex-col items-center justify-center aspect-square relative overflow-hidden">
+                <div class="absolute inset-0 bg-[radial-gradient(circle,_transparent_30%,_#0b0f19_100%)] z-10"></div>
+                
+                <!-- Grid -->
+                <div class="w-full h-full border border-sky-900/30 rounded-full relative flex items-center justify-center">
+                    <div class="w-2/3 h-2/3 border border-sky-900/30 rounded-full"></div>
+                    <div class="w-1/3 h-1/3 border border-sky-900/30 rounded-full"></div>
+                    <div class="absolute w-full h-[1px] bg-sky-900/30"></div>
+                    <div class="absolute h-full w-[1px] bg-sky-900/30"></div>
+                    
+                    <!-- Scanner -->
+                    <div class="absolute w-1/2 h-1/2 top-0 left-0 origin-bottom-right bg-gradient-to-t from-transparent to-sky-500/20 animate-[spin_4s_linear_infinite] rounded-tl-full border-r border-sky-500/50 z-0"></div>
+                    
+                    <!-- Location blips (one per location with activity; size = report count) -->
+                    <div id="radar-blips" class="absolute inset-0 z-20 pointer-events-none"></div>
+                </div>
+                <p class="absolute bottom-2 left-4 text-[9px] text-sky-700 uppercase">Proximity Sensor: <span id="radar-status">SCANNING</span></p>
+            </div>
+            
+            <!-- Activity Timeline -->
+            <div class="glass-panel p-4 col-span-1 lg:col-span-2 flex flex-col">
+                <h4 class="text-xs font-bold text-sky-600 uppercase mb-4 tracking-widest">Disruption Velocity</h4>
+                <div class="relative flex-1 min-h-[200px]">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Logs Table -->
+        <div class="glass-panel overflow-hidden flex flex-col h-64">
+            <div class="p-3 border-b border-sky-900/50 flex justify-between items-center bg-black/20">
+                <h4 class="text-xs font-bold text-sky-600 uppercase tracking-widest">Incident Ledger</h4>
+                <div class="flex gap-2">
+                    <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                    <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                </div>
+            </div>
+            <div class="overflow-auto flex-1 p-2">
+                <table class="w-full text-left text-xs text-sky-100 font-mono">
+                    <thead class="text-sky-700 uppercase border-b border-sky-900/30">
+                        <tr>
+                            <th class="px-3 py-2">T-Minus</th>
+                            <th class="px-3 py-2">Vector</th>
+                            <th class="px-3 py-2">Intel</th>
+                            <th class="px-3 py-2">Site</th>
+                            <th class="px-3 py-2">Reporter</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body" class="divide-y divide-sky-900/20">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+                <div id="empty-log" class="p-8 text-center text-sky-800 text-xs uppercase tracking-widest">
+                    No hostile entities detected.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Audio Synthesis Script -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script>
+        // --- AUDIO ENGINE ---
+        const SOUND_FILES = {
+            siren: 'sounds/siren.wav',
+            blip: 'sounds/blip.mp3',
+            click: 'sounds/click.wav',
+            login: 'sounds/blip.mp3',
+            logout: 'sounds/blip.mp3',
+            error: 'sounds/error.wav'
+        };
+        const SOUND_SETTINGS = {
+            siren: { volume: 0.9 },
+            blip: { volume: 0.7 },
+            click: { volume: 0.5 },
+            login: { volume: 0.6 },
+            logout: { volume: 0.6 },
+            error: { volume: 0.7 }
+        };
+        const soundInstances = {};
+        const DEFAULT_SOUND_PREFS = {
+            siren: true,
+            blip: true,
+            click: true,
+            login: true,
+            logout: true,
+            error: true
+        };
+        const DEFAULT_SETTINGS = {
+            targetVisitIntervalMinutes: 45
+        };
+        
+        function playSound(type) {
+            if (!state.soundPrefs || !state.soundPrefs[type]) {
+                return;
+            }
+            const sound = getHowl(type);
+            if (!sound) return;
+            sound.play();
+        }
+
+        function getHowl(type) {
+            if (!window.Howl) return null;
+            const src = SOUND_FILES[type];
+            if (!src) return null;
+            if (!soundInstances[type]) {
+                const settings = SOUND_SETTINGS[type] || {};
+                soundInstances[type] = new Howl({
+                    src: [src],
+                    volume: settings.volume ?? 0.8,
+                    preload: true
+                });
+            }
+            return soundInstances[type];
+        }
+
+        // --- CONFIG & STATE ---
+        const CONFIG = {
+            colors: {
+                signature: '#38bdf8', // Sky
+                question: '#facc15', // Yellow
+                audit: '#ef4444',    // Red
+                social: '#34d399'    // Emerald
+            },
+            labels: {
+                signature: 'SIG. HUNT',
+                question: 'QUICK Q',
+                audit: 'AUDIT',
+                social: 'CHATTER'
+            },
+            adminEmails: [
+                "chris.lasko@pandwforeigncars.com"
+            ]
+        };
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBV_VztFW094je3ueqQGB8W8oSecw4kBsI",
+            authDomain: "tiffanytracker.firebaseapp.com",
+            projectId: "tiffanytracker",
+            storageBucket: "tiffanytracker.firebasestorage.app",
+            messagingSenderId: "699191128725",
+            appId: "1:699191128725:web:5e3c77a87f7abb0f7b219c",
+            measurementId: "G-288F43RRNJ"
+        };
+
+        const RANDOM_INTEL = [
+            "PRINTER HAS OPINIONS",
+            "SIGNATURE EVADING CAPTURE",
+            "STIPULATION GREMLIN DETECTED",
+            "DEAL STRUCTURE ENTERED THE SHADOW REALM",
+            "CUSTOMER SAID “QUICK QUESTION” (PROBABLE LIE)",
+            "CREDIT APP MISSING IN ACTION",
+            "TITLE STATUS: MYSTERY MEAT",
+            "PAYOFF QUOTE EXPIRED MID-SENTENCE",
+            "TRADE MILES REPORTED… VAGUELY",
+            "RATE CONFUSION EVENT HORIZON BREACHED",
+            "F&I MENU ENERGY: CHAOTIC NEUTRAL",
+            "BANK WANTS “ONE MORE THING” (AGAIN)",
+            "DRIVER’S LICENSE PHOTO: POTATO QUALITY",
+            "CUSTOMER’S EMAIL BOUNCED INTO ORBIT",
+            "INK LEVELS CRITICAL — PREPARE SACRIFICE",
+            "STIP LIST MULTIPLIED WHEN OBSERVED",
+            "“I THOUGHT WE ALREADY SIGNED THAT” INCIDENT",
+            "DEAL SPREADSHEET ACHIEVED SENTIENCE",
+            "VIN ENTERED WRONG DIMENSION",
+            "CUSTOMER’S PHONE DIED AT THE WORST POSSIBLE TIME",
+            "THE CHECK IS… “ON THE WAY”",
+            "GAP DISCUSSION TRIGGERED EXISTENTIAL QUESTIONS",
+            "WARRANTY SELECTION: INDECISION LOCKDOWN",
+            "CUSTOMER WANTS “THE SAME PAYMENT” (NO CONTEXT PROVIDED)",
+            "THE LENDER PORTAL IS DOING THAT THING AGAIN",
+            "DOC FEE QUESTIONED BY OUTSIDE FORCES",
+            "“CAN YOU JUST REPRINT EVERYTHING?” EVENT",
+            "TIRE & WHEEL COVERAGE DEBATE INITIATED",
+            "INSURANCE CARD: MISSING OR MYTHICAL",
+            "CUSTOMER BROUGHT A SCREENSHOT AS PROOF OF EVERYTHING",
+            "APR VS RATE SEMANTICS WAR DECLARED",
+            "TRADE PAYOFF OFF BY A NUMBER THAT FEELS PERSONAL",
+            "“MY COUSIN’S A LAWYER” PROTOCOL ENGAGED",
+            "DELIVERY TIME MOVED… AGAIN",
+            "CUSTOMER REQUESTED A FAX (TIME TRAVEL DETECTED)",
+            "BANK STIP: “CALL US” (NO FURTHER DETAILS)",
+            "SIGNATURE LINE MISSED BY 0.3 MILLIMETERS",
+            "CUSTOMER SIGNED WITH A SMILEY FACE (UNCONFIRMED)",
+            "PLATES SITUATION: COMPLICATED",
+            "CUSTOMER WANTS TO “THINK ABOUT IT” WHILE HOLDING THE PEN",
+            "CHECKLIST ITEM 7 IS HAUNTING US",
+            "PRINTER JAM ESCALATED TO INCIDENT COMMAND",
+            "DEAL PACKET ATE ITSELF IN THE SCANNER",
+            "FILE NAME: FINAL_FINAL_V7_REALFINAL.PDF",
+            "SALES PERSON SAID “IT’S SIMPLE” (IT WAS NOT)",
+            "CUSTOMER CHANGED ADDRESS MID-CONTRACT",
+            "SIGNATURES COMPLETE… EXCEPT THE IMPORTANT ONE",
+            "LENDER REQUESTED “PROOF OF EXISTENCE”",
+            "“WE’RE READY TO GO” BUT NOTHING IS READY",
+            "T.I.F.F.A.N.Y. SYSTEM REPORTS: VIBES UNSTABLE"
+        ];
+
+        const DATE_RANGES = { today: 'Today', past_week: 'Past Week', past_month: 'Past Month', past_90: 'Past 90 Days', previous_month: 'Previous Month' };
+
+        let state = {
+            interactions: [],
+            locations: [],
+            selectedLocationId: '',
+            dateRange: 'today',
+            lastInteractionTime: Date.now(),
+            user: null,
+            soundPrefs: { ...DEFAULT_SOUND_PREFS },
+            settings: { ...DEFAULT_SETTINGS }
+        };
+        let selectedCategory = 'question'; // Default
+        let chartInstance = null;
+        let timelineChartInstance = null;
+        let timerInterval;
+        let interactionsUnsubscribe = null;
+        let locationsUnsubscribe = null;
+        let profilesUnsubscribe = null;
+        let settingsUnsubscribe = null;
+        let lastAuthStatus = false;
+        let presenceInterval = null;
+        const ACTIVE_WINDOW_MINUTES = 5;
+
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+        const toTimestamp = firebase.firestore.Timestamp.fromMillis;
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            initSoundControls();
+            initAdminPanel();
+            updateSettingsUI();
+            document.getElementById('location-select').addEventListener('change', handleLocationChange);
+
+            setInterval(updateTimer, 1000);
+            updateTimer();
+
+            initChart();
+            selectCategory('question'); // select default visual
+
+            auth.onAuthStateChanged(async (user) => {
+                state.user = user || null;
+                updateAuthUI();
+
+                if (user) {
+                    await ensureUserProfile(user);
+                    startListeners();
+                    await loadUserProfile(user);
+                } else {
+                    stopListeners();
+                    state.interactions = [];
+                    state.locations = [];
+                    state.selectedLocationId = '';
+                    renderDashboard();
+                    updateChart();
+                    renderLocations();
+                    renderAdminLists([]);
+                }
+            });
+        }
+
+        function selectCategory(cat) {
+            selectedCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                // find the icon to stop spinning
+                btn.querySelector('i').classList.remove('fa-spin');
+            });
+            
+            // Find specific button (traversing DOM based on onclick is messy, simple approximation)
+            const btns = document.querySelectorAll('.category-btn');
+            const target = Array.from(btns).find(b => b.getAttribute('onclick').includes(cat));
+            if(target) {
+                target.classList.add('selected');
+                playSound('click');
+            }
+        }
+
+        async function logInteraction() {
+            if (!state.user) {
+                showAuthError("Sign in to report an incident.");
+                return;
+            }
+            if (!state.selectedLocationId) {
+                showLocationError("Select a location before reporting.");
+                return;
+            }
+            const noteInput = document.getElementById('interaction-note');
+            let note = noteInput.value.trim();
+            
+            // Random Intel Generation if blank
+            if (!note) {
+                const randomIndex = Math.floor(Math.random() * RANDOM_INTEL.length);
+                note = RANDOM_INTEL[randomIndex];
+            }
+            
+            const selectedLocation = state.locations.find(loc => loc.id === state.selectedLocationId);
+            const newLog = {
+                category: selectedCategory,
+                note: note,
+                userId: state.user.uid,
+                userEmail: state.user.email || '',
+                locationId: state.selectedLocationId,
+                locationName: selectedLocation ? selectedLocation.name : '',
+                timestamp: serverTimestamp(),
+                clientTimestamp: Date.now()
+            };
+
+            await db.collection('interactions').add(newLog);
+            state.lastInteractionTime = Date.now();
+            updateTimer();
+            showLocationError('');
+            
+            noteInput.value = '';
+            
+            // FX
+            triggerRedAlert();
+            playSound('siren');
+        }
+
+        async function resetData() {
+            if (!isAdmin()) {
+                return;
+            }
+            if(confirm("CONFIRM PROTOCOL: ERASE ALL INTELLIGENCE?")) {
+                await deleteAllInteractions();
+                playSound('click');
+            }
+        }
+
+        // --- VISUAL LOGIC ---
+
+        function triggerRedAlert() {
+            const body = document.getElementById('main-body');
+            const radarText = document.getElementById('radar-status');
+            body.classList.add('red-alert-mode');
+            radarText.innerText = "TARGET ACQUIRED";
+            radarText.classList.add('text-red-500', 'animate-pulse');
+            setTimeout(() => {
+                body.classList.remove('red-alert-mode');
+                radarText.innerText = "SCANNING";
+                radarText.classList.remove('text-red-500', 'animate-pulse');
+            }, 3000);
+        }
+
+        function getLocationRadarPosition(locationId) {
+            if (!locationId) return { top: 50, left: 50 };
+            let h = 0;
+            for (let i = 0; i < locationId.length; i++) h = (h * 31 + locationId.charCodeAt(i)) >>> 0;
+            const angle = (h % 360) * Math.PI / 180;
+            const h2 = (h * 31 + 1) >>> 0;
+            const radius = 0.25 + ((h2 % 60) / 60) * 0.55;
+            const left = 50 + radius * Math.cos(angle) * 50;
+            const top = 50 + radius * Math.sin(angle) * 50;
+            return { top, left };
+        }
+
+        function renderRadarBlips() {
+            const container = document.getElementById('radar-blips');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const filtered = getFilteredInteractions();
+            const byLocation = {};
+            filtered.forEach(log => {
+                const lid = log.locationId || '_unknown';
+                if (!byLocation[lid]) byLocation[lid] = { count: 0, name: log.locationName || 'Unknown' };
+                byLocation[lid].count += 1;
+            });
+
+            const counts = Object.values(byLocation).map(o => o.count);
+            const maxCount = Math.max(1, ...counts);
+
+            Object.entries(byLocation).forEach(([locationId, { count, name }]) => {
+                if (count < 1) return;
+                const pos = getLocationRadarPosition(locationId);
+                const sizePx = Math.min(32, Math.max(8, 8 + 24 * Math.sqrt(count) / Math.sqrt(maxCount)));
+                const blip = document.createElement('div');
+                blip.className = 'absolute rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] transition-all duration-300 cursor-default pointer-events-auto';
+                blip.style.left = pos.left + '%';
+                blip.style.top = pos.top + '%';
+                blip.style.width = sizePx + 'px';
+                blip.style.height = sizePx + 'px';
+                blip.style.transform = 'translate(-50%, -50%)';
+                blip.title = name + ': ' + count + ' incident' + (count !== 1 ? 's' : '');
+                container.appendChild(blip);
+            });
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const diff = now - state.lastInteractionTime;
+            
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('timer-display').innerText = 
+                `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+
+            // Update vibe level based on time passed (inverse logic: recently seen = higher energy)
+            updateThreatLevel(hours);
+        }
+
+        function updateThreatLevel(hoursSince) {
+            const d1 = document.getElementById('defcon-1'); // Safe
+            const d2 = document.getElementById('defcon-2');
+            const d3 = document.getElementById('defcon-3');
+            const d4 = document.getElementById('defcon-4'); // Danger
+            const text = document.getElementById('threat-text');
+
+            // Reset
+            [d1,d2,d3,d4].forEach(d => d.style.opacity = '0.2');
+
+            if (hoursSince < 1) {
+                d4.style.opacity = '1';
+                text.innerText = "SPICY";
+                text.className = "text-xl font-bold text-red-500 animate-pulse";
+            } else if (hoursSince < 4) {
+                d3.style.opacity = '1';
+                text.innerText = "BUSY";
+                text.className = "text-xl font-bold text-orange-500";
+            } else if (hoursSince < 24) {
+                d2.style.opacity = '1';
+                text.innerText = "STEADY";
+                text.className = "text-xl font-bold text-yellow-500";
+            } else {
+                d1.style.opacity = '1';
+                text.innerText = "CHILL";
+                text.className = "text-xl font-bold text-emerald-500";
+            }
+        }
+
+        function renderDashboard() {
+            const filteredInteractions = getFilteredInteractions();
+            // Stats
+            const total = filteredInteractions.length;
+            const signatures = filteredInteractions.filter(i => i.category === 'signature').length;
+            const focusLevel = calculateFocusLevel(filteredInteractions);
+            const gdpImpact = calculateGdpImpact(filteredInteractions);
+            const morale = calculateMorale(filteredInteractions);
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-signatures').innerText = focusLevel + "%";
+            document.getElementById('bar-wrist').style.width = focusLevel + "%";
+
+            const statCost = document.getElementById('stat-cost');
+            const impactRounded = Math.round(Math.abs(gdpImpact));
+            if (gdpImpact >= 0) {
+                statCost.innerText = "+$" + impactRounded.toLocaleString();
+                statCost.className = "text-3xl font-black text-emerald-400 mt-2";
+            } else {
+                statCost.innerText = "-$" + impactRounded.toLocaleString();
+                statCost.className = "text-3xl font-black text-red-400 danger-text mt-2";
+            }
+            
+            const moraleEl = document.getElementById('stat-morale');
+            moraleEl.innerText = morale + "%";
+            if(morale < 70) {
+                moraleEl.className = "text-3xl font-black text-red-500 danger-text mt-2";
+                document.getElementById('stat-morale-sub').innerText = "Overbooked";
+            } else {
+                moraleEl.className = "text-3xl font-black text-emerald-400 mt-2";
+                document.getElementById('stat-morale-sub').innerText = "Healthy Cadence";
+            }
+
+            // Table
+            const tbody = document.getElementById('log-table-body');
+            tbody.innerHTML = '';
+            
+            if (filteredInteractions.length === 0) {
+                document.getElementById('empty-log').classList.remove('hidden');
+            } else {
+                document.getElementById('empty-log').classList.add('hidden');
+                
+                filteredInteractions.slice(0, 20).forEach(log => {
+                    const date = new Date(log.timestamp);
+                    const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-sky-900/10 transition-colors";
+                    
+                    let catColor = CONFIG.colors[log.category] || '#fff';
+                    
+                    const reporter = log.userEmail || log.displayName || 'Unknown';
+                    row.innerHTML = `
+                        <td class="px-3 py-2 text-slate-400 border-b border-sky-900/10">${timeStr}</td>
+                        <td class="px-3 py-2 border-b border-sky-900/10" style="color: ${catColor}">${CONFIG.labels[log.category]}</td>
+                        <td class="px-3 py-2 text-slate-300 border-b border-sky-900/10 truncate max-w-[150px]">${log.note}</td>
+                        <td class="px-3 py-2 text-slate-400 border-b border-sky-900/10">${log.locationName || '-'}</td>
+                        <td class="px-3 py-2 text-slate-400 border-b border-sky-900/10 truncate max-w-[120px]" title="${reporter}">${reporter}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            renderRadarBlips();
+        }
+
+        // --- CHARTING ---
+        function initChart() {
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            
+            Chart.defaults.color = '#64748b';
+            Chart.defaults.font.family = '"Share Tech Mono", monospace';
+            
+            timelineChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Incidents',
+                        data: [],
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#0b0f19',
+                        pointBorderColor: '#38bdf8',
+                        pointHoverBackgroundColor: '#38bdf8',
+                        pointHoverBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(56, 189, 248, 0.1)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+            updateChart();
+        }
+
+        function updateChart() {
+            if(!timelineChartInstance) return;
+            
+            const filteredInteractions = getFilteredInteractions();
+            const { start, end } = getDateRangeBounds();
+            const labels = [];
+            const counts = [];
+            
+            if (state.dateRange === 'today') {
+                // Bucket by hour
+                for (let h = 0; h < 24; h++) {
+                    const bucketStart = new Date(start).setHours(h, 0, 0, 0);
+                    const bucketEnd = new Date(start).setHours(h, 59, 59, 999);
+                    const count = filteredInteractions.filter(log =>
+                        log.timestamp >= bucketStart && log.timestamp <= bucketEnd
+                    ).length;
+                    labels.push(h === 0 ? '12a' : h === 12 ? '12p' : (h > 12 ? h - 12 : h) + (h >= 12 ? 'p' : 'a'));
+                    counts.push(count);
+                }
+            } else if (state.dateRange === 'past_week') {
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const dayStr = d.toLocaleDateString(undefined, { weekday: 'short' });
+                    const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+                    const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).getTime();
+                    const count = filteredInteractions.filter(log =>
+                        log.timestamp >= startOfDay && log.timestamp <= endOfDay
+                    ).length;
+                    labels.push(dayStr);
+                    counts.push(count);
+                }
+            } else if (state.dateRange === 'past_month') {
+                const step = 5; // 6 buckets of 5 days
+                for (let i = 5; i >= 0; i--) {
+                    const bucketEnd = new Date(end);
+                    bucketEnd.setDate(bucketEnd.getDate() - i * step);
+                    const bucketStart = new Date(bucketEnd);
+                    bucketStart.setDate(bucketStart.getDate() - (step - 1));
+                    bucketStart.setHours(0, 0, 0, 0);
+                    bucketEnd.setHours(23, 59, 59, 999);
+                    const count = filteredInteractions.filter(log =>
+                        log.timestamp >= bucketStart.getTime() && log.timestamp <= bucketEnd.getTime()
+                    ).length;
+                    labels.push(bucketStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '-' + bucketEnd.toLocaleDateString(undefined, { day: 'numeric' }));
+                    counts.push(count);
+                }
+            } else if (state.dateRange === 'past_90') {
+                const step = 15; // 6 buckets of ~15 days
+                for (let i = 5; i >= 0; i--) {
+                    const bucketEnd = new Date(end);
+                    bucketEnd.setDate(bucketEnd.getDate() - i * step);
+                    const bucketStart = new Date(bucketEnd);
+                    bucketStart.setDate(bucketStart.getDate() - (step - 1));
+                    bucketStart.setHours(0, 0, 0, 0);
+                    bucketEnd.setHours(23, 59, 59, 999);
+                    const count = filteredInteractions.filter(log =>
+                        log.timestamp >= bucketStart.getTime() && log.timestamp <= bucketEnd.getTime()
+                    ).length;
+                    labels.push(bucketStart.toLocaleDateString(undefined, { month: 'short' }) + ' ' + bucketStart.getDate());
+                    counts.push(count);
+                }
+            } else if (state.dateRange === 'previous_month') {
+                const prevMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1);
+                const daysInMonth = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+                const step = Math.max(1, Math.floor(daysInMonth / 7)); // ~7 buckets
+                for (let i = 0; i < daysInMonth; i += step) {
+                    const d = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), i + 1);
+                    const bucketStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0).getTime();
+                    const bucketEndDate = Math.min(i + step, daysInMonth);
+                    const bucketEnd = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), bucketEndDate, 23, 59, 59, 999).getTime();
+                    const count = filteredInteractions.filter(log =>
+                        log.timestamp >= bucketStart && log.timestamp <= bucketEnd
+                    ).length;
+                    labels.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+                    counts.push(count);
+                }
+            } else {
+                labels.push('All');
+                counts.push(filteredInteractions.length);
+            }
+            
+            timelineChartInstance.data.labels = labels;
+            timelineChartInstance.data.datasets[0].data = counts;
+            timelineChartInstance.update();
+        }
+
+        function getDateRangeBounds() {
+            const now = new Date();
+            let start, end;
+            switch (state.dateRange) {
+                case 'today':
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+                    break;
+                case 'past_week':
+                    end = Date.now();
+                    start = end - (7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'past_month':
+                    end = Date.now();
+                    start = end - (30 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'past_90':
+                    end = Date.now();
+                    start = end - (90 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'previous_month':
+                    start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0).getTime();
+                    end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime();
+                    break;
+                default:
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+                    end = Date.now();
+            }
+            return { start, end };
+        }
+
+        function setDateRange(range) {
+            state.dateRange = range;
+            document.querySelectorAll('[id^="range-"]').forEach(btn => btn.classList.remove('selected'));
+            const el = document.getElementById('range-' + range);
+            if (el) el.classList.add('selected');
+            renderDashboard();
+            updateChart();
+        }
+
+        function getFilteredInteractions() {
+            if (!state.user) return [];
+            const { start, end } = getDateRangeBounds();
+            return state.interactions.filter(log =>
+                log.timestamp >= start &&
+                log.timestamp <= end
+            );
+        }
+
+        function getTargetIntervalMinutes() {
+            const minutes = Number(state.settings.targetVisitIntervalMinutes);
+            if (!Number.isFinite(minutes) || minutes <= 0) {
+                return DEFAULT_SETTINGS.targetVisitIntervalMinutes;
+            }
+            return minutes;
+        }
+
+        function calculateAverageIntervalMinutes(logs) {
+            if (!logs || logs.length < 2) {
+                return getTargetIntervalMinutes();
+            }
+            const now = Date.now();
+            const cutoff = now - (24 * 60 * 60 * 1000);
+            const recent = logs.filter(log => log.timestamp >= cutoff).sort((a, b) => a.timestamp - b.timestamp);
+            if (recent.length < 2) {
+                return getTargetIntervalMinutes();
+            }
+            let totalMinutes = 0;
+            for (let i = 1; i < recent.length; i += 1) {
+                const diffMs = recent[i].timestamp - recent[i - 1].timestamp;
+                totalMinutes += diffMs / (1000 * 60);
+            }
+            return totalMinutes / (recent.length - 1);
+        }
+
+        function calculateFocusLevel(logs) {
+            const target = getTargetIntervalMinutes();
+            const avgInterval = calculateAverageIntervalMinutes(logs);
+            const ratio = avgInterval / target;
+            return Math.max(0, Math.min(100, Math.round(Math.min(1, ratio) * 100)));
+        }
+
+        function calculateMorale(logs) {
+            const target = getTargetIntervalMinutes();
+            const avgInterval = calculateAverageIntervalMinutes(logs);
+            const ratio = avgInterval / target;
+            const penalty = Math.max(0, 1 - ratio);
+            return Math.max(0, Math.min(100, Math.round(100 - penalty * 60)));
+        }
+
+        function calculateGdpImpact(logs) {
+            const target = getTargetIntervalMinutes();
+            const avgInterval = calculateAverageIntervalMinutes(logs);
+            const ratio = avgInterval / target;
+            const total = logs.length;
+            const perVisit = (50 / 12); // $50/hr / 12 (5 mins)
+            return total * perVisit * (ratio - 1);
+        }
+
+        function updateAuthUI() {
+            const loggedIn = Boolean(state.user);
+            const authStatus = document.getElementById('auth-status');
+            const loggedOutPanel = document.getElementById('auth-logged-out');
+            const loggedInPanel = document.getElementById('auth-logged-in');
+            document.getElementById('auth-user-email').innerText = state.user ? state.user.email : '';
+
+            if (loggedIn) {
+                authStatus.innerText = "Online";
+                authStatus.className = "text-[10px] text-emerald-400 uppercase";
+                loggedOutPanel.classList.add('hidden');
+                loggedInPanel.classList.remove('hidden');
+            } else {
+                authStatus.innerText = "Offline";
+                authStatus.className = "text-[10px] text-slate-600 uppercase";
+                loggedInPanel.classList.add('hidden');
+                loggedOutPanel.classList.remove('hidden');
+            }
+
+            document.getElementById('admin-panel').classList.toggle('hidden', !isAdmin());
+            document.getElementById('admin-reset').classList.toggle('hidden', !isAdmin());
+            setInteractionControlsEnabled(loggedIn);
+
+            if (loggedIn && !lastAuthStatus) {
+                playSound('login');
+            } else if (!loggedIn && lastAuthStatus) {
+                playSound('logout');
+            }
+            lastAuthStatus = loggedIn;
+        }
+
+        function setInteractionControlsEnabled(enabled) {
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.disabled = !enabled;
+                btn.classList.toggle('opacity-50', !enabled);
+                btn.classList.toggle('cursor-not-allowed', !enabled);
+            });
+            document.getElementById('interaction-note').disabled = !enabled;
+            document.getElementById('location-select').disabled = !enabled;
+            const reportButton = document.getElementById('report-btn');
+            reportButton.disabled = !enabled;
+            reportButton.classList.toggle('opacity-50', !enabled);
+            reportButton.classList.toggle('cursor-not-allowed', !enabled);
+        }
+
+        function initSoundControls() {
+            loadSoundPrefs();
+            const soundKeys = Object.keys(DEFAULT_SOUND_PREFS);
+            soundKeys.forEach(key => {
+                const checkbox = document.getElementById(`sound-toggle-${key}`);
+                if (!checkbox) return;
+                checkbox.checked = Boolean(state.soundPrefs[key]);
+                checkbox.addEventListener('change', (event) => {
+                    state.soundPrefs[key] = event.target.checked;
+                    saveSoundPrefs();
+                });
+            });
+        }
+
+        function loadSoundPrefs() {
+            const saved = localStorage.getItem('tiffanySoundPrefs_v1');
+            if (!saved) {
+                state.soundPrefs = { ...DEFAULT_SOUND_PREFS };
+                return;
+            }
+            try {
+                const parsed = JSON.parse(saved);
+                state.soundPrefs = { ...DEFAULT_SOUND_PREFS, ...parsed };
+            } catch (err) {
+                state.soundPrefs = { ...DEFAULT_SOUND_PREFS };
+            }
+        }
+
+        function saveSoundPrefs() {
+            localStorage.setItem('tiffanySoundPrefs_v1', JSON.stringify(state.soundPrefs));
+        }
+
+        function showAuthError(message) {
+            const errorEl = document.getElementById('auth-error');
+            const messageEl = document.getElementById('auth-message');
+            if (!message) {
+                errorEl.classList.add('hidden');
+                errorEl.innerText = '';
+                if (messageEl) {
+                    messageEl.classList.add('hidden');
+                    messageEl.innerText = '';
+                }
+                return;
+            }
+            errorEl.innerText = message;
+            errorEl.classList.remove('hidden');
+            playSound('error');
+        }
+
+        function showLocationError(message) {
+            const errorEl = document.getElementById('location-error');
+            if (!errorEl) return;
+            if (!message) {
+                errorEl.classList.add('hidden');
+                errorEl.innerText = '';
+                return;
+            }
+            errorEl.innerText = message;
+            errorEl.classList.remove('hidden');
+            playSound('error');
+        }
+
+        function showAuthMessage(message) {
+            const messageEl = document.getElementById('auth-message');
+            const errorEl = document.getElementById('auth-error');
+            if (!messageEl) return;
+            if (errorEl) {
+                errorEl.classList.add('hidden');
+                errorEl.innerText = '';
+            }
+            messageEl.innerText = message;
+            messageEl.classList.remove('hidden');
+        }
+
+        async function login() {
+            showAuthError('');
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showAuthError('Email and password required.');
+                return;
+            }
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                document.getElementById('login-password').value = '';
+            } catch (err) {
+                showAuthError(err.message || 'Login failed.');
+            }
+        }
+
+        async function resetPassword() {
+            showAuthError('');
+            const email = document.getElementById('login-email').value.trim();
+            if (!email) {
+                showAuthError('Enter your email to send a reset link.');
+                return;
+            }
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showAuthMessage('Password reset email sent.');
+            } catch (err) {
+                showAuthError(err.message || 'Password reset failed.');
+            }
+        }
+
+        async function logout() {
+            await auth.signOut();
+        }
+
+        function isAdmin() {
+            if (!state.user || !state.user.email) return false;
+            const email = state.user.email.toLowerCase();
+            return CONFIG.adminEmails.map(val => val.toLowerCase()).includes(email);
+        }
+
+        async function ensureUserProfile(user) {
+            if (!user) return;
+            const profileRef = db.collection('userProfiles').doc(user.uid);
+            const profileSnap = await profileRef.get();
+            if (!profileSnap.exists) {
+                await profileRef.set({
+                    email: user.email || '',
+                    displayName: user.displayName || '',
+                    createdAt: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
+                    lastActiveAt: serverTimestamp()
+                }, { merge: true });
+            } else {
+                await profileRef.set({
+                    lastLogin: serverTimestamp(),
+                    lastActiveAt: serverTimestamp()
+                }, { merge: true });
+            }
+        }
+
+        async function loadUserProfile(user) {
+            if (!user) return;
+            const profileRef = db.collection('userProfiles').doc(user.uid);
+            const profileSnap = await profileRef.get();
+            if (profileSnap.exists) {
+                const data = profileSnap.data();
+                if (data && data.selectedLocationId) {
+                    state.selectedLocationId = data.selectedLocationId;
+                }
+            }
+            renderLocations();
+        }
+
+        function startListeners() {
+            if (interactionsUnsubscribe || locationsUnsubscribe) return;
+
+            interactionsUnsubscribe = db.collection('interactions')
+                .orderBy('timestamp', 'desc')
+                .limit(200)
+                .onSnapshot((snapshot) => {
+                    state.interactions = snapshot.docs.map(doc => {
+                        const data = doc.data() || {};
+                        let timestamp = data.timestamp;
+                        if (timestamp && typeof timestamp.toMillis === 'function') {
+                            timestamp = timestamp.toMillis();
+                        } else if (typeof data.clientTimestamp === 'number') {
+                            timestamp = data.clientTimestamp;
+                        } else {
+                            timestamp = Date.now();
+                        }
+                        return {
+                            id: doc.id,
+                            ...data,
+                            timestamp
+                        };
+                    });
+                    const filtered = getFilteredInteractions();
+                    state.lastInteractionTime = filtered[0]?.timestamp || Date.now();
+                    renderDashboard();
+                    updateChart();
+                });
+
+            locationsUnsubscribe = db.collection('locations')
+                .orderBy('name')
+                .onSnapshot((snapshot) => {
+                    state.locations = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    renderLocations();
+                });
+
+            settingsUnsubscribe = db.collection('settings')
+                .doc('metrics')
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data() || {};
+                        const minutes = Number(data.targetVisitIntervalMinutes);
+                        if (Number.isFinite(minutes) && minutes > 0) {
+                            state.settings.targetVisitIntervalMinutes = minutes;
+                        }
+                    }
+                    updateSettingsUI();
+                    renderDashboard();
+                    updateChart();
+                });
+
+            if (isAdmin()) {
+                profilesUnsubscribe = db.collection('userProfiles')
+                    .orderBy('email')
+                    .onSnapshot((snapshot) => {
+                        const profiles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        renderAdminLists(profiles);
+                    });
+            }
+
+            startPresence();
+        }
+
+        function stopListeners() {
+            if (interactionsUnsubscribe) interactionsUnsubscribe();
+            if (locationsUnsubscribe) locationsUnsubscribe();
+            if (profilesUnsubscribe) profilesUnsubscribe();
+            if (settingsUnsubscribe) settingsUnsubscribe();
+            interactionsUnsubscribe = null;
+            locationsUnsubscribe = null;
+            profilesUnsubscribe = null;
+            settingsUnsubscribe = null;
+            stopPresence();
+        }
+
+        function renderLocations() {
+            const select = document.getElementById('location-select');
+            const list = document.getElementById('locations-list');
+            select.innerHTML = '<option value="">Select location...</option>';
+            list.innerHTML = '';
+
+            state.locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location.id;
+                option.textContent = location.name || 'Unnamed location';
+                if (location.id === state.selectedLocationId) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+
+                if (isAdmin()) {
+                    const row = document.createElement('div');
+                    row.className = "flex items-center justify-between bg-black/40 px-2 py-1 border border-sky-900/30";
+                    row.innerHTML = `
+                        <span>${location.name || 'Unnamed location'}</span>
+                        <button class="text-red-400 text-[10px] uppercase tracking-widest">Delete</button>
+                    `;
+                    row.querySelector('button').addEventListener('click', () => deleteLocation(location.id));
+                    list.appendChild(row);
+                }
+            });
+
+            if (!isAdmin()) {
+                list.innerHTML = '<div class="text-[10px] text-slate-500">Admin only</div>';
+            }
+
+            if (!state.selectedLocationId && state.locations.length > 0) {
+                state.selectedLocationId = state.locations[0].id;
+                select.value = state.selectedLocationId;
+                if (state.user) {
+                    db.collection('userProfiles').doc(state.user.uid).set({
+                        selectedLocationId: state.selectedLocationId
+                    }, { merge: true });
+                }
+            }
+        }
+
+        function renderAdminLists(profiles) {
+            const list = document.getElementById('users-list');
+            const stats = document.getElementById('admin-user-stats');
+            list.innerHTML = '';
+            let activeCount = 0;
+            const now = Date.now();
+            profiles.forEach(profile => {
+                const lastActiveAt = profile.lastActiveAt;
+                let lastActiveMs = null;
+                if (lastActiveAt && typeof lastActiveAt.toMillis === 'function') {
+                    lastActiveMs = lastActiveAt.toMillis();
+                } else if (typeof lastActiveAt === 'number') {
+                    lastActiveMs = lastActiveAt;
+                }
+                const isActive = lastActiveMs ? (now - lastActiveMs) <= (ACTIVE_WINDOW_MINUTES * 60 * 1000) : false;
+                if (isActive) activeCount += 1;
+                const entry = document.createElement('div');
+                entry.className = "bg-black/40 px-2 py-1 border border-sky-900/30";
+                const displayName = profile.displayName ? ` (${profile.displayName})` : '';
+                const statusLabel = isActive ? 'online' : 'offline';
+                const statusClass = isActive ? 'text-emerald-400' : 'text-slate-500';
+                entry.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span>${profile.email || 'Unknown'}${displayName}</span>
+                        <span class="text-[10px] uppercase ${statusClass}">${statusLabel}</span>
+                    </div>
+                `;
+                list.appendChild(entry);
+            });
+            if (stats) {
+                stats.innerText = `Active now: ${activeCount} / ${profiles.length}`;
+            }
+        }
+
+        function updateSettingsUI() {
+            const input = document.getElementById('target-interval');
+            if (!input) return;
+            input.value = getTargetIntervalMinutes();
+        }
+
+        async function saveSettings() {
+            if (!isAdmin()) return;
+            const input = document.getElementById('target-interval');
+            if (!input) return;
+            const minutes = Number(input.value);
+            if (!Number.isFinite(minutes) || minutes <= 0) {
+                showAuthError('Target interval must be a positive number.');
+                return;
+            }
+            await db.collection('settings').doc('metrics').set({
+                targetVisitIntervalMinutes: minutes,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        }
+
+        function toggleAdminPanel() {
+            const isCollapsed = localStorage.getItem('tiffanyAdminCollapsed') === 'true';
+            setAdminCollapsed(!isCollapsed);
+        }
+
+        function setAdminCollapsed(collapsed) {
+            const content = document.getElementById('admin-content');
+            const toggle = document.getElementById('admin-toggle');
+            if (!content || !toggle) return;
+            content.classList.toggle('hidden', collapsed);
+            toggle.innerText = collapsed ? 'Expand' : 'Collapse';
+            localStorage.setItem('tiffanyAdminCollapsed', String(collapsed));
+        }
+
+        function initAdminPanel() {
+            const collapsed = localStorage.getItem('tiffanyAdminCollapsed') === 'true';
+            setAdminCollapsed(collapsed);
+        }
+
+        function startPresence() {
+            if (!state.user) return;
+            if (presenceInterval) return;
+            updatePresence();
+            presenceInterval = setInterval(updatePresence, 60 * 1000);
+        }
+
+        function stopPresence() {
+            if (presenceInterval) {
+                clearInterval(presenceInterval);
+                presenceInterval = null;
+            }
+            if (state.user) {
+                db.collection('userProfiles').doc(state.user.uid).set({
+                    lastActiveAt: serverTimestamp()
+                }, { merge: true });
+            }
+        }
+
+        function updatePresence() {
+            if (!state.user) return;
+            db.collection('userProfiles').doc(state.user.uid).set({
+                lastActiveAt: serverTimestamp()
+            }, { merge: true });
+        }
+
+        async function addLocation() {
+            if (!isAdmin()) return;
+            const input = document.getElementById('location-name');
+            const name = input.value.trim();
+            if (!name) return;
+            await db.collection('locations').add({
+                name,
+                createdAt: serverTimestamp()
+            });
+            input.value = '';
+        }
+
+        async function deleteLocation(locationId) {
+            if (!isAdmin()) return;
+            await db.collection('locations').doc(locationId).delete();
+        }
+
+        function handleLocationChange(event) {
+            const value = event.target.value;
+            state.selectedLocationId = value;
+            showLocationError('');
+            if (!state.user) return;
+            db.collection('userProfiles').doc(state.user.uid).set({
+                selectedLocationId: value
+            }, { merge: true });
+        }
+
+        async function createUser() {
+            if (!isAdmin()) return;
+            const displayName = document.getElementById('user-display-name').value.trim();
+            const email = document.getElementById('user-email').value.trim();
+            const password = document.getElementById('user-password').value;
+
+            if (!email || !password) {
+                showAuthError('User email and password required.');
+                return;
+            }
+
+            const secondaryApp = firebase.apps.find(app => app.name === 'secondary')
+                ? firebase.app('secondary')
+                : firebase.initializeApp(FIREBASE_CONFIG, 'secondary');
+            const secondaryAuth = secondaryApp.auth();
+
+            try {
+                const credential = await secondaryAuth.createUserWithEmailAndPassword(email, password);
+                const uid = credential.user.uid;
+                await db.collection('userProfiles').doc(uid).set({
+                    email,
+                    displayName,
+                    createdAt: serverTimestamp()
+                }, { merge: true });
+                await secondaryAuth.signOut();
+
+                document.getElementById('user-display-name').value = '';
+                document.getElementById('user-email').value = '';
+                document.getElementById('user-password').value = '';
+            } catch (err) {
+                showAuthError(err.message || 'User creation failed.');
+            }
+        }
+
+        async function deleteAllInteractions() {
+            const batchSize = 200;
+            let hasMore = true;
+            while (hasMore) {
+                const snapshot = await db.collection('interactions')
+                    .orderBy('timestamp', 'desc')
+                    .limit(batchSize)
+                    .get();
+                if (snapshot.empty) {
+                    hasMore = false;
+                    break;
+                }
+                const batch = db.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+            }
+        }
+
+        async function importLocalData() {
+            if (!isAdmin()) return;
+            const savedState = localStorage.getItem('tiffanyState_v2');
+            let imported = 0;
+
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    if (parsed && Array.isArray(parsed.interactions)) {
+                        const batch = db.batch();
+                        parsed.interactions.forEach(log => {
+                            const ref = db.collection('interactions').doc();
+                            batch.set(ref, {
+                                category: log.category || 'question',
+                                note: log.note || '',
+                                userId: state.user ? state.user.uid : '',
+                                userEmail: state.user ? state.user.email : '',
+                                locationId: state.selectedLocationId || '',
+                                locationName: '',
+                                timestamp: toTimestamp(log.timestamp || Date.now()),
+                                clientTimestamp: log.timestamp || Date.now(),
+                                importedFrom: 'localStorage'
+                            });
+                            imported += 1;
+                        });
+                        await batch.commit();
+                        localStorage.removeItem('tiffanyState_v2');
+                    }
+                } catch (err) {
+                    showAuthError('Local import failed.');
+                }
+            }
+
+            const v1Count = localStorage.getItem('tiffanyCount');
+            if (v1Count) {
+                const count = parseInt(v1Count);
+                if (!Number.isNaN(count) && count > 0) {
+                    const batch = db.batch();
+                    for (let i = 0; i < count; i += 1) {
+                        const ref = db.collection('interactions').doc();
+                        const timestamp = Date.now() - (i * 10000000);
+                        batch.set(ref, {
+                            category: 'question',
+                            note: 'Legacy Data Import',
+                            userId: state.user ? state.user.uid : '',
+                            userEmail: state.user ? state.user.email : '',
+                            locationId: state.selectedLocationId || '',
+                            locationName: '',
+                            timestamp: toTimestamp(timestamp),
+                            clientTimestamp: timestamp,
+                            importedFrom: 'localStorage'
+                        });
+                        imported += 1;
+                    }
+                    await batch.commit();
+                    localStorage.removeItem('tiffanyCount');
+                }
+            }
+
+            if (!imported) {
+                showAuthError('No local data found to import.');
+            }
+        }
+
+        // --- START ---
+        init();
+
+    </script>
+</body>
+</html>
