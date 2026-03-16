@@ -468,7 +468,7 @@
                         <input type="number" id="target-interval" min="5" max="240" step="5" class="w-28 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
                         <button onclick="saveSettings()" class="btn-tech px-3 text-xs">Save</button>
                     </div>
-                    <div class="text-[10px] text-slate-500 mt-2">Used to calculate Focus, Morale, and GDP Impact.</div>
+                    <div class="text-[10px] text-slate-500 mt-2">Used to calculate Productivity, Morale, and GDP Impact.</div>
                 </div>
             </div>
             <div class="mt-4 flex items-center justify-between text-[10px] text-slate-500">
@@ -503,9 +503,9 @@
                 </div>
             </div>
 
-            <!-- Focus Level -->
+            <!-- Productivity -->
             <div class="glass-panel p-4 flex flex-col justify-between">
-                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Focus Level</p>
+                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Productivity</p>
                 <h3 id="stat-signatures" class="text-3xl font-black text-white mt-2">0%</h3>
                 <div class="w-full bg-sky-900/30 h-1 mt-2"><div id="bar-wrist" class="bg-sky-400 h-full" style="width: 0%"></div></div>
             </div>
@@ -520,8 +520,8 @@
              <!-- Sanity -->
              <div class="glass-panel p-4 flex flex-col justify-between">
                 <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Office Morale</p>
-                <h3 id="stat-morale" class="text-3xl font-black text-emerald-400 mt-2">100%</h3>
-                <p id="stat-morale-sub" class="text-[9px] text-slate-500 mt-1">Optimal Conditions</p>
+                <h3 id="stat-morale" class="text-3xl font-black text-emerald-400 mt-2">60%</h3>
+                <p id="stat-morale-sub" class="text-[9px] text-slate-500 mt-1">Baseline: 60%</p>
             </div>
         </div>
 
@@ -1074,14 +1074,14 @@
             // Stats
             const total = filteredInteractions.length;
             const personal = state.user ? filteredInteractions.filter(i => i.userId === state.user.uid).length : 0;
-            const focusLevel = calculateFocusLevel(filteredInteractions);
+            const productivity = calculateProductivity(filteredInteractions);
             const gdpImpact = calculateGdpImpact(filteredInteractions);
             const morale = calculateMorale(filteredInteractions);
 
             document.getElementById('stat-personal').innerText = personal;
             document.getElementById('stat-total').innerText = total;
-            document.getElementById('stat-signatures').innerText = focusLevel + "%";
-            document.getElementById('bar-wrist').style.width = focusLevel + "%";
+            document.getElementById('stat-signatures').innerText = productivity + "%";
+            document.getElementById('bar-wrist').style.width = productivity + "%";
 
             const statCost = document.getElementById('stat-cost');
             const impactRounded = Math.round(Math.abs(gdpImpact));
@@ -1097,10 +1097,13 @@
             moraleEl.innerText = morale + "%";
             if(morale < 70) {
                 moraleEl.className = "text-3xl font-black text-red-500 danger-text mt-2";
-                document.getElementById('stat-morale-sub').innerText = "Overbooked";
+                document.getElementById('stat-morale-sub').innerText = "Needs more Tiffany time";
+            } else if (morale < 85) {
+                moraleEl.className = "text-3xl font-black text-yellow-400 mt-2";
+                document.getElementById('stat-morale-sub').innerText = "Healthy boost";
             } else {
                 moraleEl.className = "text-3xl font-black text-emerald-400 mt-2";
-                document.getElementById('stat-morale-sub').innerText = "Healthy Cadence";
+                document.getElementById('stat-morale-sub').innerText = "Too many visits = diminishing returns";
             }
 
             // Table
@@ -1373,35 +1376,43 @@
             return totalMinutes / (recent.length - 1);
         }
 
-        function calculateFocusLevel(logs) {
+        function getDailyVisitCounts(logs) {
+            const days = new Map();
+            logs.forEach(log => {
+                const key = new Date(log.timestamp).toDateString();
+                days.set(key, (days.get(key) || 0) + 1);
+            });
+            return Array.from(days.values());
+        }
+
+        function calculateProductivity(logs) {
             if (!state.user) return 100;
             const personalLogs = logs.filter(log => log.userId === state.user.uid);
-            const personalVisits = personalLogs.length;
+            if (personalLogs.length === 0) return 100;
             const rangeMinutes = getDateRangeMinutes();
             const target = getTargetIntervalMinutes();
-            const expectedVisits = rangeMinutes / target;
-            if (expectedVisits <= 0) return 100;
-            const ratio = Math.min(1, personalVisits / expectedVisits);
-            return Math.max(0, Math.min(100, Math.round(100 * (1 - ratio))));
+            const expectedVisits = Math.max(1, rangeMinutes / target);
+            const overloadVisits = Math.max(0, personalLogs.length - expectedVisits);
+
+            const basePenalty = (personalLogs.length / expectedVisits) * 55;
+            const overloadPenalty = (overloadVisits / expectedVisits) * 45;
+
+            const productivity = 100 - basePenalty - overloadPenalty;
+            return Math.max(0, Math.min(100, Math.round(productivity)));
         }
 
         function calculateMorale(logs) {
-            if (!logs || logs.length === 0) return 100;
-            const rangeMinutes = getDateRangeMinutes();
-            const target = getTargetIntervalMinutes();
-            const expectedVisits = rangeMinutes / target;
-            if (expectedVisits <= 0) return 100;
-            const byUser = {};
-            logs.forEach(log => {
-                const uid = log.userId || '_';
-                if (!byUser[uid]) byUser[uid] = 0;
-                byUser[uid] += 1;
+            const baseMorale = 60;
+            if (!logs || logs.length === 0) return baseMorale;
+
+            const dailyVisits = getDailyVisitCounts(logs);
+            const dailyMorale = dailyVisits.map(visits => {
+                const rise = visits * 8;
+                const overload = Math.max(0, visits - 4) * 10;
+                return Math.max(0, Math.min(100, baseMorale + rise - overload));
             });
-            const focusLevels = Object.values(byUser).map(visits => {
-                const ratio = Math.min(1, visits / expectedVisits);
-                return 100 * (1 - ratio);
-            });
-            const avg = focusLevels.reduce((a, b) => a + b, 0) / focusLevels.length;
+
+            const avg = dailyMorale.reduce((sum, score) => sum + score, 0) / dailyMorale.length;
             return Math.max(0, Math.min(100, Math.round(avg)));
         }
 
