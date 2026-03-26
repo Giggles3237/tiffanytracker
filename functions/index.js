@@ -95,18 +95,28 @@ exports.funnyNote = onCall(
   }
 );
 
-/** Only admins can reset any user's password. Caller must have userProfiles/{uid}.role === 'admin'. */
+/** Delete a Firebase Auth user (used to reject pending signup requests). */
+exports.rejectUser = onCall(
+  { memory: "256MiB", maxInstances: 10 },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in to perform this action.");
+    }
+    const targetUid = (request.data && request.data.targetUid || "").trim();
+    if (!targetUid) {
+      throw new HttpsError("invalid-argument", "targetUid is required.");
+    }
+    await admin.auth().deleteUser(targetUid);
+    return { ok: true };
+  }
+);
+
+/** Any authenticated user can reset another user's password (everyone has admin access). */
 exports.adminResetPassword = onCall(
   { memory: "256MiB", maxInstances: 10 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Sign in to reset a password.");
-    }
-    const callerUid = request.auth.uid;
-    const callerProfile = await admin.firestore().collection("userProfiles").doc(callerUid).get();
-    const callerRole = callerProfile.exists ? (callerProfile.data() || {}).role : undefined;
-    if (callerRole !== "admin") {
-      throw new HttpsError("permission-denied", "Only admins can reset user passwords.");
     }
     const targetUserEmail = (request.data && request.data.targetUserEmail || "").trim();
     const newPassword = request.data && request.data.newPassword;
