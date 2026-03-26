@@ -11,7 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
+      - name: Create config.js from secret
+        run: |
+          cat > config.js <<'EOF'
+          const FIREBASE_CONFIG = {
+              apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+              authDomain: "tiffanytracker.firebaseapp.com",
+              projectId: "tiffanytracker",
+              storageBucket: "tiffanytracker.firebasestorage.app",
+              messagingSenderId: "699191128725",
+              appId: "1:699191128725:web:5e3c77a87f7abb0f7b219c",
+              measurementId: "G-288F43RRNJ"
+          };
+          EOF
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
