@@ -1630,6 +1630,18 @@
             }
         }
 
+        async function deleteUser(uid) {
+            if (!isAdmin()) return;
+            if (!confirm('Delete this user? This cannot be undone.')) return;
+            try {
+                const rejectUserFn = functions.httpsCallable('rejectUser');
+                await rejectUserFn({ targetUid: uid });
+                await db.collection('userProfiles').doc(uid).delete();
+            } catch (err) {
+                showAuthError(err.message || 'Could not delete user.');
+            }
+        }
+
         function isAdmin() {
             return Boolean(state.user);
         }
@@ -1873,12 +1885,14 @@
                 const roleClass = profile.role === 'admin' ? 'text-amber-400' : 'text-slate-400';
                 const statusLabel = isActive ? 'online' : 'offline';
                 const statusClass = isActive ? 'text-emerald-400' : 'text-slate-500';
+                const isSelf = state.user && state.user.uid === profile.id;
                 entry.innerHTML = `
                     <div class="flex items-center justify-between gap-2 flex-wrap">
                         <span>${profile.email || 'Unknown'}${displayName}</span>
                         <span class="flex items-center gap-2">
                             <span class="text-[10px] uppercase ${roleClass}">${roleLabel}</span>
                             <span class="text-[10px] uppercase ${statusClass}">${statusLabel}</span>
+                            ${!isSelf ? `<button onclick="deleteUser('${profile.id}')" class="text-[10px] text-red-400 uppercase tracking-widest hover:text-red-300">Delete</button>` : ''}
                         </span>
                     </div>
                 `;
