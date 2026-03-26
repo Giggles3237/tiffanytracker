@@ -417,66 +417,6 @@
             </div>
         </div>
 
-        <!-- Admin Console -->
-        <div id="admin-panel" class="glass-panel p-4 mb-6 hidden">
-            <div class="flex items-center justify-between border-b border-sky-900/50 pb-3 mb-4">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-xs font-bold text-sky-600 uppercase tracking-widest">Admin Console</h3>
-                    <span class="text-[10px] text-slate-500 uppercase">Restricted</span>
-                </div>
-                <button id="admin-toggle" onclick="toggleAdminPanel()" class="btn-tech px-3 py-1 text-[10px]">Collapse</button>
-            </div>
-            <div id="admin-content" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="bg-black/30 border border-sky-900/50 p-3">
-                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Locations</h4>
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="location-name" placeholder="New location name" class="flex-1 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                        <button onclick="addLocation()" class="btn-tech px-3 text-xs">Add</button>
-                    </div>
-                    <div id="locations-list" class="text-xs text-sky-100 space-y-2"></div>
-                </div>
-                <div class="bg-black/30 border border-sky-900/50 p-3">
-                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Users</h4>
-                    <div class="space-y-2 mb-3">
-                        <input type="text" id="user-display-name" placeholder="Display name (optional)" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                        <input type="email" id="user-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                        <input type="password" id="user-password" placeholder="Temp password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                        <div class="flex items-center gap-2">
-                            <label class="text-[10px] text-slate-400 uppercase tracking-widest">Role</label>
-                            <select id="user-role" class="bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono flex-1">
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                        <button onclick="createUser()" class="btn-tech w-full py-2 text-xs">Create User</button>
-                    </div>
-                    <div class="border-t border-sky-900/30 pt-3 mt-3">
-                        <h5 class="text-[10px] text-sky-500 uppercase tracking-widest mb-2">Reset password (admin)</h5>
-                        <div class="space-y-2">
-                            <input type="email" id="reset-password-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                            <input type="password" id="reset-password-new" placeholder="New password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                            <button onclick="adminResetPassword()" class="btn-tech w-full py-2 text-xs">Reset Password</button>
-                        </div>
-                    </div>
-                    <div id="admin-user-stats" class="text-[10px] text-slate-400 uppercase tracking-widest mb-2 mt-3"></div>
-                    <div id="users-list" class="text-xs text-sky-100 space-y-2"></div>
-                </div>
-                <div class="bg-black/30 border border-sky-900/50 p-3 lg:col-span-2">
-                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Store Settings</h4>
-                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
-                        <label for="target-interval" class="text-[10px] text-slate-400 uppercase tracking-widest">Target Visit Interval (minutes)</label>
-                        <input type="number" id="target-interval" min="5" max="240" step="5" class="w-28 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
-                        <button onclick="saveSettings()" class="btn-tech px-3 text-xs">Save</button>
-                    </div>
-                    <div class="text-[10px] text-slate-500 mt-2">Used to calculate Focus, Morale, and GDP Impact.</div>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between text-[10px] text-slate-500">
-                <span>Optional migration from local-only browser data.</span>
-                <button onclick="importLocalData()" class="btn-tech px-3 py-1 text-[10px]">Import Local Data</button>
-            </div>
-        </div>
-
         <!-- Date Range Filter -->
         <div class="flex flex-wrap items-center gap-2 mb-4">
             <span class="text-[10px] text-sky-600 uppercase tracking-widest">Time Window</span>
@@ -508,13 +448,6 @@
                 <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">Focus Level</p>
                 <h3 id="stat-signatures" class="text-3xl font-black text-white mt-2">0%</h3>
                 <div class="w-full bg-sky-900/30 h-1 mt-2"><div id="bar-wrist" class="bg-sky-400 h-full" style="width: 0%"></div></div>
-            </div>
-
-            <!-- GDP Impact -->
-            <div class="glass-panel p-4 flex flex-col justify-between">
-                <p class="text-sky-600 text-[10px] font-bold uppercase tracking-widest">GDP Impact</p>
-                <h3 id="stat-cost" class="text-3xl font-black text-red-400 danger-text mt-2">$0</h3>
-                <p class="text-[9px] text-slate-500 mt-1">@ $50/hr overhead</p>
             </div>
 
              <!-- Sanity -->
@@ -588,6 +521,66 @@
             </div>
         </div>
 
+        <!-- Admin Console -->
+        <div id="admin-panel" class="glass-panel p-4 mb-6 hidden mt-6">
+            <div class="flex items-center justify-between border-b border-sky-900/50 pb-3 mb-4">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-xs font-bold text-sky-600 uppercase tracking-widest">Admin Console</h3>
+                    <span class="text-[10px] text-slate-500 uppercase">Restricted</span>
+                </div>
+                <button id="admin-toggle" onclick="toggleAdminPanel()" class="btn-tech px-3 py-1 text-[10px]">Collapse</button>
+            </div>
+            <div id="admin-content" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-black/30 border border-sky-900/50 p-3">
+                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Locations</h4>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="location-name" placeholder="New location name" class="flex-1 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <button onclick="addLocation()" class="btn-tech px-3 text-xs">Add</button>
+                    </div>
+                    <div id="locations-list" class="text-xs text-sky-100 space-y-2"></div>
+                </div>
+                <div class="bg-black/30 border border-sky-900/50 p-3">
+                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Users</h4>
+                    <div class="space-y-2 mb-3">
+                        <input type="text" id="user-display-name" placeholder="Display name (optional)" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <input type="email" id="user-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <input type="password" id="user-password" placeholder="Temp password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <div class="flex items-center gap-2">
+                            <label class="text-[10px] text-slate-400 uppercase tracking-widest">Role</label>
+                            <select id="user-role" class="bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono flex-1">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button onclick="createUser()" class="btn-tech w-full py-2 text-xs">Create User</button>
+                    </div>
+                    <div class="border-t border-sky-900/30 pt-3 mt-3">
+                        <h5 class="text-[10px] text-sky-500 uppercase tracking-widest mb-2">Reset password (admin)</h5>
+                        <div class="space-y-2">
+                            <input type="email" id="reset-password-email" placeholder="User email" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                            <input type="password" id="reset-password-new" placeholder="New password" class="w-full bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                            <button onclick="adminResetPassword()" class="btn-tech w-full py-2 text-xs">Reset Password</button>
+                        </div>
+                    </div>
+                    <div id="admin-user-stats" class="text-[10px] text-slate-400 uppercase tracking-widest mb-2 mt-3"></div>
+                    <div id="users-list" class="text-xs text-sky-100 space-y-2"></div>
+                </div>
+                <div class="bg-black/30 border border-sky-900/50 p-3 lg:col-span-2">
+                    <h4 class="text-[10px] text-sky-500 uppercase tracking-widest mb-3">Store Settings</h4>
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                        <label for="target-interval" class="text-[10px] text-slate-400 uppercase tracking-widest">Target Visit Interval (minutes)</label>
+                        <input type="number" id="target-interval" min="5" max="240" step="5" class="w-28 bg-black/50 border border-sky-900 text-sky-100 text-xs p-2 focus:outline-none focus:border-sky-500 font-mono">
+                        <button onclick="saveSettings()" class="btn-tech px-3 text-xs">Save</button>
+                    </div>
+                    <div class="text-[10px] text-slate-500 mt-2">Used to calculate Focus Level and Office Vibe.</div>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between text-[10px] text-slate-500">
+                <span>Optional migration from local-only browser data.</span>
+                <button onclick="importLocalData()" class="btn-tech px-3 py-1 text-[10px]">Import Local Data</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Audio Synthesis Script -->
@@ -596,6 +589,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="config.js"></script>
     <script>
         // --- AUDIO ENGINE ---
         const SOUND_FILES = {
@@ -670,15 +664,7 @@
             ]
         };
 
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyBV_VztFW094je3ueqQGB8W8oSecw4kBsI",
-            authDomain: "tiffanytracker.firebaseapp.com",
-            projectId: "tiffanytracker",
-            storageBucket: "tiffanytracker.firebasestorage.app",
-            messagingSenderId: "699191128725",
-            appId: "1:699191128725:web:5e3c77a87f7abb0f7b219c",
-            measurementId: "G-288F43RRNJ"
-        };
+        // FIREBASE_CONFIG is loaded from config.js (gitignored)
 
         const RANDOM_INTEL = [
             "PRINTER HAS OPINIONS",
@@ -1047,25 +1033,27 @@
             const d4 = document.getElementById('defcon-4'); // Danger
             const text = document.getElementById('threat-text');
 
+            const targetHours = getTargetIntervalMinutes() / 60;
+
             // Reset
             [d1,d2,d3,d4].forEach(d => d.style.opacity = '0.2');
 
-            if (hoursSince < 1) {
+            if (hoursSince < 0.25) {
                 d4.style.opacity = '1';
                 text.innerText = "SPICY";
                 text.className = "text-xl font-bold text-red-500 animate-pulse";
-            } else if (hoursSince < 4) {
+            } else if (hoursSince < targetHours) {
                 d3.style.opacity = '1';
                 text.innerText = "BUSY";
                 text.className = "text-xl font-bold text-orange-500";
-            } else if (hoursSince < 24) {
+            } else if (hoursSince < targetHours * 2) {
                 d2.style.opacity = '1';
                 text.innerText = "STEADY";
                 text.className = "text-xl font-bold text-yellow-500";
             } else {
                 d1.style.opacity = '1';
                 text.innerText = "CHILL";
-                text.className = "text-xl font-bold text-emerald-500";
+                text.className = "text-xl font-bold text-emerald-500 animate-pulse";
             }
         }
 
@@ -1075,7 +1063,6 @@
             const total = filteredInteractions.length;
             const personal = state.user ? filteredInteractions.filter(i => i.userId === state.user.uid).length : 0;
             const focusLevel = calculateFocusLevel(filteredInteractions);
-            const gdpImpact = calculateGdpImpact(filteredInteractions);
             const morale = calculateMorale(filteredInteractions);
 
             document.getElementById('stat-personal').innerText = personal;
@@ -1083,24 +1070,27 @@
             document.getElementById('stat-signatures').innerText = focusLevel + "%";
             document.getElementById('bar-wrist').style.width = focusLevel + "%";
 
-            const statCost = document.getElementById('stat-cost');
-            const impactRounded = Math.round(Math.abs(gdpImpact));
-            if (gdpImpact >= 0) {
-                statCost.innerText = "+$" + impactRounded.toLocaleString();
-                statCost.className = "text-3xl font-black text-emerald-400 mt-2";
-            } else {
-                statCost.innerText = "-$" + impactRounded.toLocaleString();
-                statCost.className = "text-3xl font-black text-red-400 danger-text mt-2";
-            }
-            
             const moraleEl = document.getElementById('stat-morale');
             moraleEl.innerText = morale + "%";
-            if(morale < 70) {
-                moraleEl.className = "text-3xl font-black text-red-500 danger-text mt-2";
-                document.getElementById('stat-morale-sub').innerText = "Overbooked";
-            } else {
+            const moraleSub = document.getElementById('stat-morale-sub');
+            if (morale >= 85) {
                 moraleEl.className = "text-3xl font-black text-emerald-400 mt-2";
-                document.getElementById('stat-morale-sub').innerText = "Healthy Cadence";
+                moraleSub.innerText = "All Clear, She's Busy!";
+            } else if (morale >= 65) {
+                moraleEl.className = "text-3xl font-black text-emerald-400 mt-2";
+                moraleSub.innerText = "Healthy Cadence";
+            } else if (morale >= 45) {
+                moraleEl.className = "text-3xl font-black mt-2";
+                moraleEl.style.color = "#f59e0b";
+                moraleSub.innerText = "Tiffany's On the Move!";
+            } else if (morale >= 20) {
+                moraleEl.className = "text-3xl font-black mt-2";
+                moraleEl.style.color = "#38bdf8";
+                moraleSub.innerText = "She's in High Demand!";
+            } else {
+                moraleEl.className = "text-3xl font-black mt-2";
+                moraleEl.style.color = "#38bdf8";
+                moraleSub.innerText = "Tiffany is Everywhere!";
             }
 
             // Table
@@ -1382,7 +1372,7 @@
             const expectedVisits = rangeMinutes / target;
             if (expectedVisits <= 0) return 100;
             const ratio = Math.min(1, personalVisits / expectedVisits);
-            return Math.max(0, Math.min(100, Math.round(100 * (1 - ratio))));
+            return Math.max(35, Math.min(100, Math.round(100 * (1 - Math.sqrt(ratio)))));
         }
 
         function calculateMorale(logs) {
@@ -1399,19 +1389,10 @@
             });
             const focusLevels = Object.values(byUser).map(visits => {
                 const ratio = Math.min(1, visits / expectedVisits);
-                return 100 * (1 - ratio);
+                return 100 * (1 - Math.sqrt(ratio));
             });
             const avg = focusLevels.reduce((a, b) => a + b, 0) / focusLevels.length;
-            return Math.max(0, Math.min(100, Math.round(avg)));
-        }
-
-        function calculateGdpImpact(logs) {
-            const target = getTargetIntervalMinutes();
-            const avgInterval = calculateAverageIntervalMinutes(logs);
-            const ratio = avgInterval / target;
-            const total = logs.length;
-            const perVisit = (50 / 12); // $50/hr / 12 (5 mins)
-            return total * perVisit * (ratio - 1);
+            return Math.max(35, Math.min(100, Math.round(avg)));
         }
 
         function updateAuthUI() {
@@ -1571,7 +1552,7 @@
         }
 
         function isAdmin() {
-            return state.userRole === 'admin';
+            return Boolean(state.user);
         }
 
         async function ensureUserProfile(user) {
@@ -1836,7 +1817,7 @@
         }
 
         function initAdminPanel() {
-            const collapsed = localStorage.getItem('tiffanyAdminCollapsed') === 'true';
+            const collapsed = localStorage.getItem('tiffanyAdminCollapsed') !== 'false';
             setAdminCollapsed(collapsed);
         }
 
